@@ -1,12 +1,12 @@
 {
   "name": "streamly",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A lightweight automation engine for building and running modular workflows",
   "author": {
     "name": "Mario Gómez",
     "email": "mariogomezarr@gmail.com"
   },
-  "private": true,
+  "private": false,
   "license": "MIT",
   "scripts": {
     "build": "nest build",
