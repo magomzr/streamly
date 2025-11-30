@@ -110,5 +110,7 @@ const runWorkflow = async (workflow, ctx) => {
       userId: 123,
     },
   };
+  console.time();
   await runWorkflow(workflow, context);
+  console.timeEnd();
 })();
