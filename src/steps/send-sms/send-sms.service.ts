@@ -3,10 +3,10 @@ import { IContext, IStep } from 'src/types';
 import { createStepLog } from 'src/utils/logger';
 
 @Injectable()
-export class SendSmsStepService implements IStep {
+export class SendSmsStep implements IStep {
   id: '123';
   type = 'send_sms';
-  static stepType = 'send_sms'; // Agregar esto
+  static stepType = 'send_sms';
 
   async run(ctx: IContext, settings: any): Promise<any> {
     const msg = settings.message.replace(
@@ -14,14 +14,16 @@ export class SendSmsStepService implements IStep {
       ctx.steps['fetchTodo']?.title || '',
     );
 
+    const phoneNumber = ctx.vars.phoneNumber || 'unknown';
+
     ctx.logs.push(
       createStepLog(
         'INFO',
-        SendSmsStepService.name,
-        `Sending SMS with message: ${msg}`,
+        SendSmsStep.name,
+        `Sending SMS to ${phoneNumber} with message: ${msg}`,
       ),
     );
 
-    return { sent: true, message: msg };
+    return { sent: true, message: msg, to: phoneNumber };
   }
 }

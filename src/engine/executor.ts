@@ -4,11 +4,11 @@ import { IStepRegistry, IContext, IFlow, IExecutor } from 'src/types';
 export class Executor implements IExecutor {
   constructor(private registry: IStepRegistry) {}
 
-  async run(flow: IFlow, input: any): Promise<IContext> {
+  async run(flow: IFlow, vars: any): Promise<IContext> {
     const ctx: IContext = {
       name: flow.name,
       id: '123',
-      vars: { ...input },
+      vars: { ...vars },
       steps: {},
       logs: [],
     };

@@ -1,5 +1,5 @@
 import { IContext, IFlow } from './core';
 
 export interface IExecutor {
-  run(flow: IFlow, input: any): Promise<IContext>;
+  run(flow: IFlow, vars: any): Promise<IContext>;
 }

@@ -6,7 +6,7 @@ import { createStepLog } from 'src/utils/logger';
 export class HttpClientStep implements IStep {
   id: '123';
   type = 'http_request';
-  static stepType = 'http_request'; // Agregar esto
+  static stepType = 'http_request';
 
   async run(ctx: IContext, settings: any): Promise<any> {
     const { url, method = 'GET' } = settings;

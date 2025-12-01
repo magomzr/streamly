@@ -7,9 +7,13 @@ export class AppController {
 
   @Get()
   getHello(): any {
-    return this.engineService.runFlow(sampleFlow, {});
+    return this.engineService.runFlow(sampleFlow, vars);
   }
 }
+
+export const vars = {
+  phoneNumber: '+57 300 123 4567',
+};
 
 export const sampleFlow = {
   name: 'Dummy flow',
@@ -27,6 +31,6 @@ export const sampleFlow = {
       settings: {
         message: 'Fetched title: {{steps.fetchTodo.title}}',
       },
-    }
+    },
   ],
 };

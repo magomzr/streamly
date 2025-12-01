@@ -10,9 +10,9 @@ export class EngineService {
   private readonly registry = new StepRegistry();
   private readonly engine = new Engine(this.registry);
 
-  async runFlow(flow: any, input: any): Promise<IContext> {
+  async runFlow(flow: any, vars: any): Promise<IContext> {
     this.logger.log(`Running flow: ${flow.name}`);
-    return this.engine.execute(flow, input);
+    return this.engine.execute(flow, vars);
   }
 
   registerStep(step: any): void {
