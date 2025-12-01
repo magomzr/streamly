@@ -4,8 +4,6 @@ import { createStepLog } from 'src/utils/logger';
 
 @Injectable()
 export class SendSmsStep implements IStepExecutor {
-  id: '123';
-  type = 'send_sms';
   static stepType = 'send_sms';
 
   async run(ctx: IContext, settings: any): Promise<any> {

@@ -4,8 +4,6 @@ import { createStepLog } from 'src/utils/logger';
 
 @Injectable()
 export class HttpClientStep implements IStepExecutor {
-  id: '123';
-  type = 'http_request';
   static stepType = 'http_request';
 
   async run(ctx: IContext, settings: any): Promise<any> {

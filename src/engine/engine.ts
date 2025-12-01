@@ -8,7 +8,7 @@ export class Engine {
     this.executor = new Executor(registry);
   }
 
-  async execute(flow: IFlow, vars: any): Promise<IContext> {
+  async execute(flow: IFlow, vars: Record<string, any>): Promise<IContext> {
     return this.executor.run(flow, vars);
   }
 }

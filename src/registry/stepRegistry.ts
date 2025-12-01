@@ -1,5 +1,7 @@
+import { Injectable } from '@nestjs/common';
 import { IStepConstructor, IStepRegistry } from 'src/types';
 
+@Injectable()
 export class StepRegistry implements IStepRegistry {
   private steps = new Map<string, IStepConstructor>();
 
