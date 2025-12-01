@@ -25,7 +25,7 @@ export const sampleFlow = {
       type: 'send_sms',
       name: 'sendSmsStep',
       settings: {
-        message: 'Fetched title: {{http_response.title}}',
+        message: 'Fetched title: {{steps.fetchTodo.title}}',
       },
     }
   ],

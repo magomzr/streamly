@@ -8,10 +8,10 @@ export class SendSmsStepService implements IStep {
   type = 'send_sms';
   static stepType = 'send_sms'; // Agregar esto
 
-  async run(ctx: IContext, settings: any): Promise<void> {
+  async run(ctx: IContext, settings: any): Promise<any> {
     const msg = settings.message.replace(
-      '{{http_response.title}}',
-      ctx.vars['http_response']?.title || '',
+      '{{steps.fetchTodo.title}}',
+      ctx.steps['fetchTodo']?.title || '',
     );
 
     ctx.logs.push(
@@ -21,5 +21,7 @@ export class SendSmsStepService implements IStep {
         `Sending SMS with message: ${msg}`,
       ),
     );
+
+    return { sent: true, message: msg };
   }
 }

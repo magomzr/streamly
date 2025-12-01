@@ -31,7 +31,7 @@ export interface IStep {
   with the run method that all steps must implement.
 */
 export interface IStreamlyStep extends IStep {
-  run(ctx: IContext, settings: any): Promise<void>;
+  run(ctx: IContext, settings: any): Promise<any>;
 }
 
 /*

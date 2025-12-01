@@ -25,7 +25,11 @@ export class Executor implements IExecutor {
       const StepCtor = this.registry.resolve(step.type);
       const instance = new StepCtor();
 
-      await instance.run(ctx, step.settings || {});
+      const output = await instance.run(ctx, step.settings || {});
+
+      if (step.name) {
+        ctx.steps[step.name] = output;
+      }
 
       ctx.logs.push(
         createStepLog('INFO', 'Executor', `Completed step: ${step.type} with id: ${step.id}`),

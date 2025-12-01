@@ -30,7 +30,6 @@ export class HttpClientStep implements IStep {
       ),
     );
 
-    ctx.steps[this.id] = data;
-    ctx.vars['http_response'] = data;
+    return data;
   }
 }
