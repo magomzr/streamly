@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
-import { HttpClientStepService } from 'src/steps/http-client.step/http-client.step.service';
-import { SendSmsStepService } from 'src/steps/send-sms.step/send-sms.step.service';
+import { HttpClientStep } from 'src/steps/http-client/http-client.service';
+import { SendSmsStepService } from 'src/steps/send-sms/send-sms.service';
 
 @Module({
-  providers: [HttpClientStepService, SendSmsStepService],
+  providers: [HttpClientStep, SendSmsStepService],
+  exports: [HttpClientStep, SendSmsStepService],
 })
 export class StepsModule {}
