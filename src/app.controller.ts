@@ -17,11 +17,13 @@ export const sampleFlow = {
     {
       id: '67547de2-500c-4b53-83f7-2fa70b92d9a3',
       type: 'http_request',
+      name: 'fetchTodo',
       settings: { url: 'https://jsonplaceholder.typicode.com/todos/1' },
     },
     {
       id: 'bd326d47-6a12-44ea-acfd-e0e7c2e8469b',
       type: 'send_sms',
+      name: 'sendSmsStep',
       settings: {
         message: 'Fetched title: {{http_response.title}}',
       },

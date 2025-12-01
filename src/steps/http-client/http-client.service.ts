@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { IContext, IStreamlyStep } from 'src/types';
+import { IContext, IStep } from 'src/types';
 import { createStepLog } from 'src/utils/logger';
 
 @Injectable()
-export class HttpClientStep implements IStreamlyStep {
+export class HttpClientStep implements IStep {
   id: '123';
   type = 'http_request';
   static stepType = 'http_request'; // Agregar esto
@@ -30,6 +30,7 @@ export class HttpClientStep implements IStreamlyStep {
       ),
     );
 
+    ctx.steps[this.id] = data;
     ctx.vars['http_response'] = data;
   }
 }

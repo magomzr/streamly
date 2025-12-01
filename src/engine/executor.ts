@@ -9,6 +9,7 @@ export class Executor implements IExecutor {
       name: flow.name,
       id: '123',
       vars: { ...input },
+      steps: {},
       logs: [],
     };
 

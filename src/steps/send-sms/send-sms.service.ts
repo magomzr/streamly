@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { IContext, IStreamlyStep } from 'src/types';
+import { IContext, IStep } from 'src/types';
 import { createStepLog } from 'src/utils/logger';
 
 @Injectable()
-export class SendSmsStepService implements IStreamlyStep {
+export class SendSmsStepService implements IStep {
   id: '123';
   type = 'send_sms';
   static stepType = 'send_sms'; // Agregar esto

@@ -1,7 +1,7 @@
-import { IStreamlyStep, IStepConstructor, IStepRegistry } from 'src/types';
+import { IStep, IStepConstructor, IStepRegistry } from 'src/types';
 
 export class StepRegistry implements IStepRegistry {
-  private steps = new Map<string, IStreamlyStep>();
+  private steps = new Map<string, IStep>();
 
   register(stepCtor: IStepConstructor): void {
     this.steps.set(stepCtor.stepType, new stepCtor());
