@@ -23,6 +23,9 @@ export const sampleFlow = {
       type: 'http_request',
       name: 'fetchTodo',
       settings: { url: 'https://jsonplaceholder.typicode.com/todos/1' },
+      retry: {
+        maxAttempts: 3,
+      },
     },
     {
       id: 'bd326d47-6a12-44ea-acfd-e0e7c2e8469b',
@@ -30,6 +33,9 @@ export const sampleFlow = {
       name: 'sendSmsStep',
       settings: {
         message: 'Fetched title: {{steps.fetchTodo.title}}',
+      },
+      retry: {
+        maxAttempts: 2,
       },
     },
   ],

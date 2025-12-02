@@ -224,10 +224,10 @@ export class StepsModule implements OnModuleInit {
 - Structured logging with timestamps
 - Type-safe interfaces
 - NestJS integration with full DI support
+- Error handling and retry logic
 
 ### Roadmap
 
-- Error handling and retry logic
 - Conditional branching
 - Parallel execution
 - Trigger-driven flows
