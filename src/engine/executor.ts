@@ -1,5 +1,6 @@
-import { createStepLog } from 'src/utils/logger';
-import { IStepRegistry, IContext, IFlow, IExecutor } from 'src/types';
+import { createStepLog } from '../utils/logger';
+import { evaluateCondition } from '../utils/condition-evaluator';
+import { IStepRegistry, IContext, IFlow, IExecutor } from '../types';
 
 export class Executor implements IExecutor {
   constructor(private registry: IStepRegistry) {}
@@ -20,29 +21,7 @@ export class Executor implements IExecutor {
     );
 
     try {
-      for (const step of flow.steps) {
-        ctx.logs.push(
-          createStepLog(
-            'INFO',
-            'Executor',
-            `Executing step: ${step.type} with id: ${step.id}`,
-          ),
-        );
-
-        const output = await this.executeStepWithRetry(ctx, step);
-
-        if (step.name) {
-          ctx.steps[step.name] = output;
-        }
-
-        ctx.logs.push(
-          createStepLog(
-            'INFO',
-            'Executor',
-            `Completed step: ${step.type} with id: ${step.id}`,
-          ),
-        );
-      }
+      await this.executeSteps(ctx, flow.steps);
 
       ctx.status = 'completed';
       ctx.completedAt = new Date();
@@ -66,6 +45,66 @@ export class Executor implements IExecutor {
     }
 
     return ctx;
+  }
+
+  private async executeSteps(ctx: IContext, steps: any[]): Promise<void> {
+    for (const step of steps) {
+      ctx.logs.push(
+        createStepLog(
+          'INFO',
+          'Executor',
+          `Executing step: ${step.type} with id: ${step.id}`,
+        ),
+      );
+
+      const output = await this.executeStepWithRetry(ctx, step);
+
+      if (step.name) {
+        ctx.steps[step.name] = {
+          ...output,
+          _metadata: {
+            stepId: step.id,
+            stepType: step.type,
+            success: true,
+            executedAt: new Date(),
+          },
+        };
+      }
+
+      ctx.logs.push(
+        createStepLog(
+          'INFO',
+          'Executor',
+          `Completed step: ${step.type} with id: ${step.id}`,
+        ),
+      );
+
+      if (step.branches && step.branches.length > 0) {
+        await this.executeBranches(ctx, step.branches);
+        return;
+      }
+    }
+  }
+
+  private async executeBranches(ctx: IContext, branches: any[]): Promise<void> {
+    for (const branch of branches) {
+      const conditionMet = evaluateCondition(branch.condition, ctx);
+
+      if (conditionMet) {
+        ctx.logs.push(
+          createStepLog(
+            'INFO',
+            'Executor',
+            `Branch condition met: ${branch.condition}`,
+          ),
+        );
+
+        await this.executeSteps(ctx, branch.steps);
+        return;
+      }
+    }
+
+    ctx.logs.push(createStepLog('WARN', 'Executor', 'No branch condition met'));
   }
 
   private async executeStepWithRetry(ctx: IContext, step: any): Promise<any> {

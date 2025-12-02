@@ -1,4 +1,4 @@
-import { IStepRegistry, IContext, IFlow } from 'src/types';
+import { IStepRegistry, IContext, IFlow } from '../types';
 import { Executor } from './executor';
 
 export class Engine {

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { IContext, IStepExecutor } from 'src/types';
-import { createStepLog } from 'src/utils/logger';
+import { IContext, IStepExecutor } from '../../types';
+import { createStepLog } from '../../utils/logger';
 
 @Injectable()
 export class HttpClientStep implements IStepExecutor {

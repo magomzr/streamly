@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { StepRegistry } from 'src/registry/stepRegistry';
+import { StepRegistry } from '../registry/stepRegistry';
 import { Engine } from './engine';
-import { IContext, IFlow, IStepConstructor } from 'src/types';
+import { IContext, IFlow, IStepConstructor } from '../types';
 
 @Injectable()
 export class EngineService {

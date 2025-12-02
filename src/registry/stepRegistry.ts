@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { IStepConstructor, IStepRegistry } from 'src/types';
+import { IStepConstructor, IStepRegistry } from '../types';
 
 @Injectable()
 export class StepRegistry implements IStepRegistry {
