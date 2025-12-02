@@ -1,13 +1,22 @@
 /*
   Context that travels through the flow execution.
-  Contains variables, step outputs, and logs.
+  Contains variables, step outputs, logs, and execution metadata.
 */
 export interface IContext {
   id: string;
   name: string;
+  status: 'running' | 'completed' | 'failed';
+  startedAt: Date;
+  completedAt?: Date;
   vars: Record<string, any>;
   steps: Record<string, any>;
   logs: string[];
+  error?: {
+    stepId: string;
+    stepName?: string;
+    message: string;
+    attempt: number;
+  };
 }
 
 /*
@@ -19,6 +28,9 @@ export interface IStepDefinition {
   name?: string;
   type: string;
   settings?: Record<string, any>;
+  retry?: {
+    maxAttempts?: number;
+  };
 }
 
 /*
