@@ -176,6 +176,7 @@ export class HttpClientStep implements IStepExecutor {
       send-sms.service.ts
     /json-minifier
       json-minifier.service.ts
+    ...
   /types
     core.ts                 # Core interfaces
     engine.ts               # Engine interfaces
