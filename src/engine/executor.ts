@@ -61,15 +61,27 @@ export class Executor implements IExecutor {
       const output = await this.executeStepWithRetry(ctx, step);
 
       if (step.name) {
-        ctx.steps[step.name] = {
-          ...output,
-          _metadata: {
-            stepId: step.id,
-            stepType: step.type,
-            success: true,
-            executedAt: new Date(),
-          },
+        const metadata = {
+          stepId: step.id,
+          stepType: step.type,
+          success: true,
+          executedAt: new Date(),
         };
+
+        if (Array.isArray(output)) {
+          ctx.steps[step.name] = output;
+          ctx.steps[step.name]._metadata = metadata;
+        } else if (typeof output === 'object' && output !== null) {
+          ctx.steps[step.name] = {
+            ...output,
+            _metadata: metadata,
+          };
+        } else {
+          ctx.steps[step.name] = {
+            value: output,
+            _metadata: metadata,
+          };
+        }
       }
 
       ctx.logs.push(

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { IContext, IStepExecutor } from '../../types';
-import { createStepLog } from '../../utils/logger';
+import { IContext, IStepExecutor } from '../../../types';
+import { createStepLog } from '../../../utils/logger';
 
 @Injectable()
 export class DelayStep implements IStepExecutor {

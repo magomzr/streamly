@@ -1,12 +1,19 @@
 import { Module, OnModuleInit } from '@nestjs/common';
-import { HttpClientStep } from '../steps/http-client/http-client.service';
-import { SendSmsStep } from '../steps/send-sms/send-sms.service';
 import { EngineService } from '../engine/engine.service';
 import { EngineModule } from './engine.module';
-import { JsonMinifierStep } from '../steps/json-minifer/json-minifier.service';
-import { DelayStep } from '../steps/delay/delay.service';
-import { TransformDataStep } from '../steps/transform-data/transform-data.service';
-import { WebhookStep } from '../steps/webhook/webhook.service';
+import {
+  HttpClientStep,
+  WebhookStep,
+  SendSmsStep,
+  DelayStep,
+  FilterArrayStep,
+  SortArrayStep,
+  TransformDataStep,
+  JsonMinifierStep,
+  Base64EncodeStep,
+  Base64DecodeStep,
+  StringFormatStep,
+} from '../steps';
 
 @Module({
   imports: [EngineModule],
@@ -17,6 +24,11 @@ import { WebhookStep } from '../steps/webhook/webhook.service';
     DelayStep,
     TransformDataStep,
     WebhookStep,
+    FilterArrayStep,
+    SortArrayStep,
+    StringFormatStep,
+    Base64EncodeStep,
+    Base64DecodeStep,
   ],
   exports: [
     HttpClientStep,
@@ -25,6 +37,11 @@ import { WebhookStep } from '../steps/webhook/webhook.service';
     DelayStep,
     TransformDataStep,
     WebhookStep,
+    FilterArrayStep,
+    SortArrayStep,
+    StringFormatStep,
+    Base64EncodeStep,
+    Base64DecodeStep,
   ],
 })
 export class StepsModule implements OnModuleInit {
@@ -37,5 +54,10 @@ export class StepsModule implements OnModuleInit {
     this.engineService.registerStep(DelayStep);
     this.engineService.registerStep(TransformDataStep);
     this.engineService.registerStep(WebhookStep);
+    this.engineService.registerStep(FilterArrayStep);
+    this.engineService.registerStep(SortArrayStep);
+    this.engineService.registerStep(StringFormatStep);
+    this.engineService.registerStep(Base64EncodeStep);
+    this.engineService.registerStep(Base64DecodeStep);
   }
 }

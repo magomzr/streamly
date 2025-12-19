@@ -1,3 +1,6 @@
+# 0.0.6
+- Include filter-array, sort-array, string-format and base64 encryption steps (#16)
+
 # 0.0.5
 - Include delay, transform and webhook steps (#14)
 
