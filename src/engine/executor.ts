@@ -100,7 +100,7 @@ export class Executor implements IExecutor {
 
         const StepCtor = this.registry.resolve(step.type);
         const instance = new StepCtor();
-        
+
         const resolvedSettings = resolveTemplates(step.settings || {}, ctx);
         return await instance.run(ctx, resolvedSettings);
       } catch (error) {
