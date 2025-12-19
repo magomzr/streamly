@@ -7,10 +7,7 @@ export class SendSmsStep implements IStepExecutor {
   static stepType = 'send_sms';
 
   async run(ctx: IContext, settings: any): Promise<any> {
-    const msg = settings.message.replace(
-      '{{steps.fetchTodo.title}}',
-      ctx.steps['fetchTodo']?.title || '',
-    );
+    const msg = settings.message.replace('{{steps.fetchTodo.title}}');
 
     const phoneNumber = ctx.vars.phoneNumber || 'unknown';
 

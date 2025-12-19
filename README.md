@@ -1,6 +1,6 @@
 # Streamly
 
-Streamly is a workflow automation engine inspired by tools like Zapier, Activepieces, and n8n, built with NestJS and TypeScript. It provides a clean, minimal, and extensible architecture for executing sequential workflows with context propagation, conditional branching, error handling, and modular step design.
+Streamly is a workflow automation engine inspired by tools like Zapier, Activepieces, and n8n, built with NestJS and TypeScript. It provides a clean, minimal, and extensible architecture for executing sequential workflows with context propagation, error handling, and modular step design.
 
 ## Motivation
 
@@ -52,9 +52,9 @@ The execution context travels through all steps:
 interface IContext {
   id: string;
   name: string;
-  vars: Record<string, any>;      // Initial input variables
-  steps: Record<string, any>;     // Output from each step by name
-  logs: string[];                 // Execution logs
+  vars: Record<string, any>; // Initial input variables
+  steps: Record<string, any>; // Output from each step by name
+  logs: string[]; // Execution logs
   status: 'running' | 'completed' | 'failed';
   startedAt: Date;
   completedAt?: Date;
@@ -82,17 +82,17 @@ Each step output includes execution metadata:
 ctx.steps.fetchTodo = {
   // Step's actual output
   id: 1,
-  title: "Test Todo",
+  title: 'Test Todo',
   completed: true,
-  
+
   // Metadata added by executor
   _metadata: {
-    stepId: "step-1",
-    stepType: "http_request",
+    stepId: 'step-1',
+    stepType: 'http_request',
     success: true,
-    executedAt: "2024-01-01T00:00:00.000Z"
-  }
-}
+    executedAt: '2024-01-01T00:00:00.000Z',
+  },
+};
 ```
 
 ### Step Implementation
@@ -130,8 +130,6 @@ export class HttpClientStep implements IStepExecutor {
       http-client.service.ts
     /send-sms
       send-sms.service.ts
-    /router
-      router.service.ts     # Conditional branching
   /types
     core.ts                 # Core interfaces
     engine.ts               # Engine interfaces
@@ -141,7 +139,6 @@ export class HttpClientStep implements IStepExecutor {
     steps.module.ts         # Steps module with auto-registration
   /utils
     logger.ts               # Logging utilities
-    condition-evaluator.ts  # Condition evaluation for branching
 ```
 
 ### Key Components
@@ -153,8 +150,6 @@ export class HttpClientStep implements IStepExecutor {
 **Step Registry**: Injectable registry that maps step types to their constructors. Steps are auto-registered on module initialization.
 
 **Step Executors**: Injectable services that implement business logic. Each step receives context and settings, returns output.
-
-**Condition Evaluator**: Evaluates template expressions for conditional branching.
 
 ---
 
@@ -177,53 +172,11 @@ Steps can be configured with retry logic:
 ```
 
 When a step fails:
+
 - The executor retries according to `maxAttempts`
 - Each retry is logged with WARN level
 - If all retries fail, the flow status becomes 'failed'
 - Error details are stored in `ctx.error`
-
-### Conditional Branching
-
-Use the `router` step type to create conditional workflows:
-
-```typescript
-{
-  id: 'router-1',
-  type: 'router',
-  name: 'checkStatus',
-  branches: [
-    {
-      condition: '{{steps.fetchTodo.completed}} === true',
-      steps: [
-        {
-          id: 'branch-a',
-          type: 'send_sms',
-          name: 'notifyCompleted',
-          settings: { message: 'Task completed!' }
-        }
-      ]
-    },
-    {
-      condition: 'default',
-      steps: [
-        {
-          id: 'branch-b',
-          type: 'send_email',
-          name: 'notifyPending',
-          settings: { message: 'Task still pending' }
-        }
-      ]
-    }
-  ]
-}
-```
-
-**How it works:**
-- The executor evaluates each branch condition in order
-- The first matching condition executes its steps
-- Use `'default'` or `'true'` for fallback branches
-- Template variables like `{{steps.stepName.field}}` are replaced with actual values
-- After a branch executes, the flow terminates (branches diverge, no convergence)
 
 ---
 
@@ -241,13 +194,6 @@ interface IStepDefinition {
   retry?: {
     maxAttempts?: number;
   };
-  branches?: IBranch[];
-}
-
-// Branch definition
-interface IBranch {
-  condition: string;
-  steps: IStepDefinition[];
 }
 
 // Implementation class
@@ -262,7 +208,7 @@ This separation ensures clear boundaries between configuration and execution.
 
 ## Usage
 
-### Running a Simple Flow
+### Running a Flow
 
 ```typescript
 const flow = {
@@ -273,72 +219,27 @@ const flow = {
       name: 'fetchTodo',
       type: 'http_request',
       settings: { url: 'https://jsonplaceholder.typicode.com/todos/1' },
-      retry: { maxAttempts: 3 }
+      retry: { maxAttempts: 3 },
     },
     {
       id: 'step-2',
       name: 'sendNotification',
       type: 'send_sms',
-      settings: { message: 'Title: {{steps.fetchTodo.title}}' }
-    }
-  ]
-};
-
-const result = await engineService.runFlow(flow, { phoneNumber: '+1234567890' });
-
-console.log(result.status);                 // 'completed' or 'failed'
-console.log(result.steps.fetchTodo);        // HTTP response with _metadata
-console.log(result.steps.sendNotification); // SMS result with _metadata
-console.log(result.logs);                   // Execution logs
-console.log(result.startedAt);              // Start timestamp
-console.log(result.completedAt);            // End timestamp
-```
-
-### Running a Conditional Flow
-
-```typescript
-const flow = {
-  name: 'Conditional Flow',
-  steps: [
-    {
-      id: 'step-1',
-      type: 'http_request',
-      name: 'fetchTodo',
-      settings: { url: 'https://jsonplaceholder.typicode.com/todos/1' }
+      settings: { message: 'Title: {{steps.fetchTodo.title}}' },
     },
-    {
-      id: 'router-1',
-      type: 'router',
-      name: 'checkCompleted',
-      branches: [
-        {
-          condition: '{{steps.fetchTodo.completed}} === true',
-          steps: [
-            {
-              id: 'branch-a-1',
-              type: 'send_sms',
-              name: 'notifyCompleted',
-              settings: { message: 'Todo completed: {{steps.fetchTodo.title}}' }
-            }
-          ]
-        },
-        {
-          condition: 'default',
-          steps: [
-            {
-              id: 'branch-b-1',
-              type: 'send_sms',
-              name: 'notifyPending',
-              settings: { message: 'Todo pending: {{steps.fetchTodo.title}}' }
-            }
-          ]
-        }
-      ]
-    }
-  ]
+  ],
 };
 
-const result = await engineService.runFlow(flow, { phoneNumber: '+1234567890' });
+const result = await engineService.runFlow(flow, {
+  phoneNumber: '+1234567890',
+});
+
+console.log(result.status); // 'completed' or 'failed'
+console.log(result.steps.fetchTodo); // HTTP response with _metadata
+console.log(result.steps.sendNotification); // SMS result with _metadata
+console.log(result.logs); // Execution logs
+console.log(result.startedAt); // Start timestamp
+console.log(result.completedAt); // End timestamp
 ```
 
 ### Creating a New Step
@@ -353,13 +254,13 @@ export class MyCustomStep implements IStepExecutor {
   async run(ctx: IContext, settings: any): Promise<any> {
     // Access input variables
     const value = ctx.vars.someVariable;
-    
+
     // Access previous step outputs
     const previousData = ctx.steps.previousStepName;
-    
+
     // Add logs
     ctx.logs.push(createStepLog('INFO', 'MyCustomStep', 'Processing...'));
-    
+
     // Return output
     return { result: 'success' };
   }
@@ -396,21 +297,19 @@ export class StepsModule implements OnModuleInit {
 - NestJS integration with full DI support
 - Error handling with detailed error context
 - Retry logic with configurable max attempts
-- Conditional branching with template variable evaluation
 - Flow execution status tracking (running, completed, failed)
 - Execution timestamps (startedAt, completedAt)
 
 ### Roadmap
 
+- Conditional branching
 - Parallel execution
-- Branch convergence (merge step)
 - Trigger-driven flows
 - Workflow versioning and persistence
 - RxJS-based reactive execution
 - Queue-based execution (Bull/BullMQ)
 - Visual flow builder (Angular)
 - Step marketplace
-- Advanced condition operators (AND, OR, NOT)
 - Loop/iteration support
 
 ---
