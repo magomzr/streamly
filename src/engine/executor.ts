@@ -1,5 +1,6 @@
 import { createStepLog } from '../utils/logger';
-import { evaluateCondition } from '../utils/condition-evaluator';
+import { resolveTemplates } from '../utils/template-resolver';
+import { generateUUID } from '../utils/uuid';
 import { IStepRegistry, IContext, IFlow, IExecutor } from '../types';
 
 export class Executor implements IExecutor {
@@ -8,7 +9,7 @@ export class Executor implements IExecutor {
   async run(flow: IFlow, vars: Record<string, any>): Promise<IContext> {
     const ctx: IContext = {
       name: flow.name,
-      id: '123',
+      id: generateUUID(),
       vars: { ...vars },
       steps: {},
       logs: [],
@@ -78,33 +79,7 @@ export class Executor implements IExecutor {
           `Completed step: ${step.type} with id: ${step.id}`,
         ),
       );
-
-      if (step.branches && step.branches.length > 0) {
-        await this.executeBranches(ctx, step.branches);
-        return;
-      }
     }
-  }
-
-  private async executeBranches(ctx: IContext, branches: any[]): Promise<void> {
-    for (const branch of branches) {
-      const conditionMet = evaluateCondition(branch.condition, ctx);
-
-      if (conditionMet) {
-        ctx.logs.push(
-          createStepLog(
-            'INFO',
-            'Executor',
-            `Branch condition met: ${branch.condition}`,
-          ),
-        );
-
-        await this.executeSteps(ctx, branch.steps);
-        return;
-      }
-    }
-
-    ctx.logs.push(createStepLog('WARN', 'Executor', 'No branch condition met'));
   }
 
   private async executeStepWithRetry(ctx: IContext, step: any): Promise<any> {
@@ -125,7 +100,9 @@ export class Executor implements IExecutor {
 
         const StepCtor = this.registry.resolve(step.type);
         const instance = new StepCtor();
-        return await instance.run(ctx, step.settings || {});
+        
+        const resolvedSettings = resolveTemplates(step.settings || {}, ctx);
+        return await instance.run(ctx, resolvedSettings);
       } catch (error) {
         lastError = error;
         ctx.logs.push(

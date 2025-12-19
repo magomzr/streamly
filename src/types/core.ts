@@ -20,14 +20,6 @@ export interface IContext {
 }
 
 /*
-  Branch definition for conditional execution.
-*/
-export interface IBranch {
-  condition: string;
-  steps: IStepDefinition[];
-}
-
-/*
   Step definition from the UI/flow configuration.
   Represents what the user configures.
 */
@@ -39,7 +31,6 @@ export interface IStepDefinition {
   retry?: {
     maxAttempts?: number;
   };
-  branches?: IBranch[];
 }
 
 /*
