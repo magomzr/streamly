@@ -1,171 +1,434 @@
 # Streamly
 
-Streamly is a **workflow automation engine** inspired by tools like
-**Zapier**, **Activepieces**, and **n8n**, but designed from scratch
-with a clean, minimal, and extensible architecture. It aims to serve as
-a **learning-grade but production-ready** foundation for exploring
-workflow execution, context propagation, modular connector design,
-observable-based orchestration, and NestJS integration.
+Streamly is a workflow automation engine inspired by tools like Zapier, Activepieces, and n8n, built with NestJS and TypeScript. It provides a clean, minimal, and extensible architecture for executing sequential workflows with context propagation, dynamic template resolution, error handling, and modular step design.
 
 ## Motivation
 
-Modern automation platforms follow a predictable architecture:
+Modern automation platforms share common architectural patterns:
 
-1.  A **Flow Engine** (runtime / executor)
-2.  A **Flow Definition** (JSON, DSL, UI-generated, etc.)
-3.  A collection of reusable **steps / actions / connectors**
-4.  A **context object** that travels through the pipeline
-5.  Error handling, retries, observability
-6.  Execution modes (sync, queued, event-driven)
-7.  Future support for branching, parallel execution, and triggers
+1. A flow engine (runtime/executor)
+2. Flow definitions (JSON-based configuration)
+3. Reusable steps/actions/connectors
+4. Context object that travels through the pipeline
+5. Error handling and observability
+6. Execution modes (sync, queued, event-driven)
 
-This repository starts simple but robust, building the foundation for a
-scalable automation engine.
+Streamly implements these patterns with a focus on simplicity, type safety, and extensibility.
 
-------------------------------------------------------------------------
+---
 
-## Core Concept
+## Core Concepts
 
-A **flow** is a list of ordered steps:
+### Flow Definition
 
-``` json
-[
-  { "name": "readVars" },
-  { "name": "callApi" },
-  { "name": "notify" },
-  { "name": "updateVars" }
-]
-```
+A flow is a JSON structure containing ordered steps:
 
-Each **step** is a small unit of logic:
-
-``` js
+```json
 {
-  name: "stepName",
-  run: async (ctx) => ({ ...updates })
-}
-```
-
-The **FlowEngine** orchestrates sequential execution, merging the output
-of each step into a shared `context`.
-
-------------------------------------------------------------------------
-
-## Architecture Overview
-
-    /src
-      /engine
-        flow-engine.js
-      /steps
-        steps.js
-      run.js
-
-------------------------------------------------------------------------
-
-## 🔧 Flow Engine (JS-first, RxJS-ready)
-
-``` js
-export class FlowEngine {
-  constructor({ steps = [] } = {}) {
-    this.steps = steps;
-  }
-
-  async run(initialContext = {}) {
-    let ctx = { ...initialContext };
-
-    for (const step of this.steps) {
-      const { name, run } = step;
-      console.log(`Executing step: ${name}`);
-
-      try {
-        const result = await run(ctx);
-        ctx = { ...ctx, ...result };
-      } catch (error) {
-        console.error(`Error in "${name}":`, error.message);
-        ctx.error = { step: name, message: error.message };
-        break;
-      }
+  "name": "Sample Flow",
+  "steps": [
+    {
+      "id": "step-1",
+      "name": "fetchTodo",
+      "type": "http_request",
+      "settings": { "url": "https://api.example.com/todos/1" },
+      "retry": { "maxAttempts": 3 }
+    },
+    {
+      "id": "step-2",
+      "name": "notifyUser",
+      "type": "send_sms",
+      "settings": { "message": "Todo: {{steps.fetchTodo.title}}" }
     }
+  ]
+}
+```
 
-    console.log("Flow execution completed.");
-    return ctx;
+### Context Propagation
+
+The execution context travels through all steps:
+
+```typescript
+interface IContext {
+  id: string;
+  name: string;
+  vars: Record<string, any>; // Initial input variables
+  steps: Record<string, any>; // Output from each step by name
+  logs: string[]; // Execution logs
+  status: 'running' | 'completed' | 'failed';
+  startedAt: Date;
+  completedAt?: Date;
+  error?: {
+    stepId: string;
+    stepName?: string;
+    message: string;
+    attempt: number;
+  };
+}
+```
+
+- `vars`: Global variables passed at flow initialization
+- `steps`: Outputs from executed steps, accessible by step name (includes `_metadata`)
+- `logs`: Timestamped execution logs with levels (INFO, WARN, ERROR)
+- `status`: Current execution status
+- `startedAt`/`completedAt`: Execution timestamps
+- `error`: Error details if flow fails
+
+### Template Resolution
+
+Streamly includes a powerful template resolver that dynamically replaces variables in step settings before execution:
+
+```typescript
+// Step settings with templates
+{
+  message: 'Todo: {{steps.fetchTodo.title}}';
+}
+
+// Resolved before step execution
+{
+  message: 'Todo: delectus aut autem';
+}
+```
+
+**Supported syntax:**
+
+- `{{vars.variableName}}` - Access input variables
+- `{{steps.stepName.field}}` - Access previous step outputs
+- `{{steps.stepName.nested.field}}` - Access nested properties
+- Works with strings, objects, and arrays
+
+**How it works:**
+
+1. Before each step executes, the Executor resolves all templates in `settings`
+2. Templates are replaced with actual values from the context
+3. Steps receive fully resolved settings (no template logic needed in steps)
+4. If a value doesn't exist, it's replaced with an empty string
+
+### Step Output with Metadata
+
+Each step output includes execution metadata:
+
+```typescript
+ctx.steps.fetchTodo = {
+  // Step's actual output
+  id: 1,
+  title: 'Test Todo',
+  completed: true,
+
+  // Metadata added by executor
+  _metadata: {
+    stepId: 'step-1',
+    stepType: 'http_request',
+    success: true,
+    executedAt: '2024-01-01T00:00:00.000Z',
+  },
+};
+```
+
+### Step Implementation
+
+Steps are injectable NestJS services implementing `IStepExecutor`:
+
+```typescript
+@Injectable()
+export class HttpClientStep implements IStepExecutor {
+  static stepType = 'http_request';
+
+  async run(ctx: IContext, settings: any): Promise<any> {
+    const { url, method = 'GET' } = settings;
+
+    ctx.logs.push(
+      createStepLog('INFO', 'HttpClientStep', `${method} request to ${url}`),
+    );
+
+    const res = await fetch(url);
+    const data = await res.json();
+
+    return data;
   }
 }
 ```
 
-------------------------------------------------------------------------
+**Step best practices:**
 
-## Example Steps
+- Keep steps simple and focused on business logic
+- Don't handle errors with try-catch (let them propagate to Executor)
+- Only log INFO/WARN messages (Executor handles ERROR logging)
+- Return data directly (Executor adds metadata automatically)
+- Settings are already resolved (no need to handle templates)
 
-``` js
-import fetch from "node-fetch";
+---
 
-export const readVars = {
-  name: "readVars",
-  run: async (ctx) => {
-    const { userId } = ctx;
-    console.log(`Initial variables: userId=${userId}`);
-    return { loadedAt: Date.now() };
-  }
-};
+## Architecture
 
-export const callApi = {
-  name: "callApi",
-  run: async () => {
-    console.log("Performing HTTP request...");
-    const res = await fetch("https://jsonplaceholder.typicode.com/todos/1");
-    const data = await res.json();
-    return { apiResult: data };
-  }
-};
-
-export const notify = {
-  name: "notify",
-  run: async (ctx) => {
-    console.log(`Sending notification with: "${ctx.apiResult.title}"`);
-    return { notificationSent: true };
-  }
-};
-
-export const updateVars = {
-  name: "updateVars",
-  run: async () => ({
-    lastUpdated: new Date().toISOString()
-  })
-};
+```
+/src
+  /engine
+    engine.service.ts       # Facade for flow execution
+    engine.ts               # Core engine orchestrator
+    executor.ts             # Sequential step executor with retry logic
+  /registry
+    stepRegistry.ts         # Step type registry
+  /steps
+    /http-client
+      http-client.service.ts
+    /send-sms
+      send-sms.service.ts
+    /json-minifier
+      json-minifier.service.ts
+  /types
+    core.ts                 # Core interfaces
+    engine.ts               # Engine interfaces
+    registry.ts             # Registry interfaces
+  /modules
+    engine.module.ts        # Engine module
+    steps.module.ts         # Steps module with auto-registration
+  /utils
+    logger.ts               # Logging utilities
+    template-resolver.ts    # Template variable resolution
+    uuid.ts                 # UUID generation
 ```
 
-------------------------------------------------------------------------
+### Key Components
 
-## Running a Flow
+**Engine Service**: Facade that coordinates flow execution through dependency injection.
 
-``` js
-import { FlowEngine } from "./engine/flow-engine.js";
-import { readVars, callApi, notify, updateVars } from "./steps/steps.js";
+**Executor**: Iterates through flow steps, resolves templates, instantiates step executors, manages context, handles retries, and collects outputs.
 
-const engine = new FlowEngine({
-  steps: [readVars, callApi, notify, updateVars]
-});
+**Template Resolver**: Recursively resolves template variables in step settings before execution.
 
-const result = await engine.run({
-  userId: "123",
-  phone: "+57 300 000 0000",
-  variables: {}
-});
+**Step Registry**: Injectable registry that maps step types to their constructors. Steps are auto-registered on module initialization.
 
-console.log("\nFinal Result:");
-console.log(result);
+**Step Executors**: Injectable services that implement business logic. Each step receives context and resolved settings, returns output.
+
+---
+
+## Features
+
+### Template Resolution
+
+Dynamic variable replacement in step settings:
+
+```typescript
+{
+  id: 'step-2',
+  type: 'send_sms',
+  settings: {
+    message: 'User {{vars.userName}} completed: {{steps.fetchTodo.title}}'
+  }
+}
 ```
 
-------------------------------------------------------------------------
+The Executor automatically resolves templates before step execution, so steps receive clean, resolved data.
 
-## Roadmap
+### Error Handling and Retry Logic
 
--   RxJS-based FlowEngine
--   Step registry & connector marketplace
--   Trigger-driven flows
--   Branching & conditional logic
--   Parallel execution
--   Workflow versioning
--   Angular visual builder
--   NestJS integration with DI, modules, and queues
+Steps can be configured with retry logic:
+
+```typescript
+{
+  id: 'step-1',
+  type: 'http_request',
+  name: 'fetchTodo',
+  settings: { url: 'https://api.example.com/todos/1' },
+  retry: {
+    maxAttempts: 3  // Retry up to 3 times on failure
+  }
+}
+```
+
+When a step fails:
+
+- The executor retries according to `maxAttempts`
+- Each retry is logged with WARN level
+- If all retries fail, the flow status becomes 'failed'
+- Error details are stored in `ctx.error`
+- Subsequent steps are skipped
+
+**Centralized error handling:**
+
+- Steps don't need try-catch blocks
+- Errors propagate naturally to the Executor
+- Executor logs all errors with full context
+- Clean separation between business logic and error handling
+
+---
+
+## Type System
+
+### Step Definition vs Step Executor
+
+```typescript
+// Configuration from UI/API
+interface IStepDefinition {
+  id: string;
+  name?: string;
+  type: string;
+  settings?: Record<string, any>;
+  retry?: {
+    maxAttempts?: number;
+  };
+}
+
+// Implementation class
+interface IStepExecutor {
+  run(ctx: IContext, settings: any): Promise<any>;
+}
+```
+
+This separation ensures clear boundaries between configuration and execution.
+
+---
+
+## Usage
+
+### Running a Flow
+
+```typescript
+const flow = {
+  name: 'Simple Flow',
+  steps: [
+    {
+      id: 'step-1',
+      name: 'fetchTodo',
+      type: 'http_request',
+      settings: { url: 'https://jsonplaceholder.typicode.com/todos/1' },
+      retry: { maxAttempts: 3 },
+    },
+    {
+      id: 'step-2',
+      name: 'sendNotification',
+      type: 'send_sms',
+      settings: { message: 'Title: {{steps.fetchTodo.title}}' },
+    },
+  ],
+};
+
+const result = await engineService.runFlow(flow, {
+  phoneNumber: '+1234567890',
+});
+
+console.log(result.status); // 'completed' or 'failed'
+console.log(result.steps.fetchTodo); // HTTP response with _metadata
+console.log(result.steps.sendNotification); // SMS result with _metadata
+console.log(result.logs); // Execution logs
+console.log(result.startedAt); // Start timestamp
+console.log(result.completedAt); // End timestamp
+```
+
+### Creating a New Step
+
+1. Create a new service implementing `IStepExecutor`:
+
+```typescript
+@Injectable()
+export class MyCustomStep implements IStepExecutor {
+  static stepType = 'my_custom_step';
+
+  async run(ctx: IContext, settings: any): Promise<any> {
+    // Access input variables
+    const value = ctx.vars.someVariable;
+
+    // Access previous step outputs
+    const previousData = ctx.steps.previousStepName;
+
+    // Add logs (only INFO/WARN, not ERROR)
+    ctx.logs.push(createStepLog('INFO', 'MyCustomStep', 'Processing...'));
+
+    // Return output (no try-catch needed)
+    return { result: 'success' };
+  }
+}
+```
+
+2. Register in `StepsModule`:
+
+```typescript
+@Module({
+  providers: [MyCustomStep, ...],
+  exports: [MyCustomStep, ...],
+})
+export class StepsModule implements OnModuleInit {
+  onModuleInit() {
+    this.engineService.registerStep(MyCustomStep);
+  }
+}
+```
+
+---
+
+## Features
+
+### Implemented
+
+- Sequential step execution
+- Dynamic template resolution for step settings
+- Context propagation with vars and step outputs
+- Step output metadata (stepId, stepType, success, executedAt)
+- Step registry with dependency injection
+- Auto-registration of steps on module init
+- Structured logging with timestamps and levels (INFO, WARN, ERROR)
+- Type-safe interfaces with clear separation of concerns
+- NestJS integration with full DI support
+- Centralized error handling in Executor
+- Retry logic with configurable max attempts
+- Flow execution status tracking (running, completed, failed)
+- Execution timestamps (startedAt, completedAt)
+- Clean step architecture (no boilerplate error handling)
+
+### Roadmap
+
+- Conditional branching
+- Parallel execution
+- Trigger-driven flows
+- Workflow versioning and persistence
+- RxJS-based reactive execution
+- Queue-based execution (Bull/BullMQ)
+- Visual flow builder (Angular)
+- Step marketplace
+- Loop/iteration support
+- Advanced template operators (filters, transformations)
+
+---
+
+## Development
+
+### Installation
+
+```bash
+npm install
+```
+
+### Running
+
+```bash
+npm run start:dev
+```
+
+### Testing
+
+```bash
+npm run test
+```
+
+### Testing Error Handling
+
+Access `GET /fail` to see a flow that intentionally fails with retry logic.
+
+---
+
+## Design Principles
+
+- **Simplicity**: Minimal abstractions, clear separation of concerns
+- **Type Safety**: Full TypeScript coverage with explicit interfaces
+- **Extensibility**: Easy to add new steps without modifying core engine
+- **Testability**: Dependency injection enables easy mocking and testing
+- **Scalability**: Architecture supports future enhancements (queues, parallel execution, etc.)
+- **Observability**: Comprehensive logging and execution metadata
+- **Clean Code**: Steps focus on business logic, framework handles infrastructure
+
+---
+
+## License
+
+MIT
