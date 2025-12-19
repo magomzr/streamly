@@ -62,7 +62,7 @@ export const failingFlow = {
 };
 
 export const complexFlow = {
-  name: 'Complex Flow - Multiple HTTP & Minify',
+  name: 'Complex Flow - All Steps',
   steps: [
     {
       id: generateUUID(),
@@ -80,16 +80,38 @@ export const complexFlow = {
     },
     {
       id: generateUUID(),
+      type: 'delay',
+      name: 'waitBeforeUser',
+      settings: { milliseconds: 1000 },
+    },
+    {
+      id: generateUUID(),
       type: 'http_request',
       name: 'fetchUser',
       settings: { url: 'https://jsonplaceholder.typicode.com/users/1' },
     },
     {
       id: generateUUID(),
-      type: 'json_minifier',
-      name: 'minifyUser',
+      type: 'transform_data',
+      name: 'transformUser',
       settings: {
-        jsonString: '{{steps.fetchUser}}',
+        mapping: {
+          userId: '{{steps.fetchUser.id}}',
+          fullName: '{{steps.fetchUser.name}}',
+          email: '{{steps.fetchUser.email}}',
+        },
+      },
+    },
+    {
+      id: generateUUID(),
+      type: 'webhook',
+      name: 'sendWebhook',
+      settings: {
+        url: 'https://jsonplaceholder.typicode.com/posts',
+        payload: {
+          todo: '{{steps.fetchTodo.title}}',
+          user: '{{steps.transformUser.fullName}}',
+        },
       },
     },
     {
@@ -98,7 +120,7 @@ export const complexFlow = {
       name: 'sendSummary',
       settings: {
         message:
-          'Todo: {{steps.minifyTodo.minifiedJson}}, User: {{steps.minifyUser.minifiedJson}}',
+          'Todo: {{steps.fetchTodo.title}}, User: {{steps.transformUser.fullName}}',
       },
     },
   ],
