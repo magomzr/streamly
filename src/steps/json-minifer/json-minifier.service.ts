@@ -9,7 +9,7 @@ export class JsonMinifierStep implements IStepExecutor {
   async run(ctx: IContext, settings: any): Promise<any> {
     const { jsonString } = settings;
 
-    const parsedJson = JSON.parse(jsonString);
+    const parsedJson = JSON.parse(jsonString as string);
 
     if (parsedJson?._metadata) {
       delete parsedJson._metadata;
