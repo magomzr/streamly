@@ -67,15 +67,36 @@ export const complexFlow = {
     {
       id: generateUUID(),
       type: 'http_request',
-      name: 'fetchTodo',
-      settings: { url: 'https://jsonplaceholder.typicode.com/todos/1' },
+      name: 'fetchTodos',
+      settings: { url: 'https://jsonplaceholder.typicode.com/todos' },
+    },
+    {
+      id: generateUUID(),
+      type: 'filter_array',
+      name: 'filterCompleted',
+      settings: {
+        array: '{{steps.fetchTodos}}',
+        field: 'completed',
+        operator: '===',
+        value: true,
+      },
+    },
+    {
+      id: generateUUID(),
+      type: 'sort_array',
+      name: 'sortByUserId',
+      settings: {
+        array: '{{steps.filterCompleted.filtered}}',
+        field: 'userId',
+        order: 'asc',
+      },
     },
     {
       id: generateUUID(),
       type: 'json_minifier',
-      name: 'minifyTodo',
+      name: 'minifyTodos',
       settings: {
-        jsonString: '{{steps.fetchTodo}}',
+        jsonString: '{{steps.sortByUserId.sorted}}',
       },
     },
     {
@@ -92,14 +113,39 @@ export const complexFlow = {
     },
     {
       id: generateUUID(),
+      type: 'string_format',
+      name: 'formatUserName',
+      settings: {
+        text: '{{steps.fetchUser.name}}',
+        operation: 'uppercase',
+      },
+    },
+    {
+      id: generateUUID(),
       type: 'transform_data',
       name: 'transformUser',
       settings: {
         mapping: {
           userId: '{{steps.fetchUser.id}}',
-          fullName: '{{steps.fetchUser.name}}',
+          fullName: '{{steps.formatUserName.formatted}}',
           email: '{{steps.fetchUser.email}}',
         },
+      },
+    },
+    {
+      id: generateUUID(),
+      type: 'base64_encode',
+      name: 'encodeEmail',
+      settings: {
+        text: '{{steps.transformUser.email}}',
+      },
+    },
+    {
+      id: generateUUID(),
+      type: 'base64_decode',
+      name: 'decodeEmail',
+      settings: {
+        encoded: '{{steps.encodeEmail.encoded}}',
       },
     },
     {
@@ -109,7 +155,7 @@ export const complexFlow = {
       settings: {
         url: 'https://jsonplaceholder.typicode.com/posts',
         payload: {
-          todo: '{{steps.fetchTodo.title}}',
+          completedCount: '{{steps.filterCompleted.count}}',
           user: '{{steps.transformUser.fullName}}',
         },
       },
@@ -120,7 +166,7 @@ export const complexFlow = {
       name: 'sendSummary',
       settings: {
         message:
-          'Todo: {{steps.fetchTodo.title}}, User: {{steps.transformUser.fullName}}',
+          'Completed: {{steps.filterCompleted.count}}, User: {{steps.transformUser.fullName}}',
       },
     },
   ],

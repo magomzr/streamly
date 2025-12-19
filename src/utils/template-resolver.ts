@@ -28,8 +28,17 @@ export function resolveTemplates(obj: any, ctx: IContext): any {
 /**
  * Resolves template variables in a string.
  * Example: "Hello {{vars.name}}" -> "Hello John"
+ * If the entire string is a single template, returns the value directly (preserves arrays/objects)
  */
-function resolveString(template: string, ctx: IContext): string {
+function resolveString(template: string, ctx: IContext): any {
+  const singleTemplateMatch = /^\{\{([^}]+)\}\}$/.exec(template);
+
+  if (singleTemplateMatch) {
+    const path = singleTemplateMatch[1].trim();
+    const value = getValueByPath(ctx, path);
+    return value !== undefined && value !== null ? value : '';
+  }
+
   return template.replace(/\{\{([^}]+)\}\}/g, (match: string, path: string) => {
     const value = getValueByPath(ctx, path.trim());
 
