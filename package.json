@@ -1,6 +1,6 @@
 {
   "name": "streamly",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "A lightweight automation engine for building and running modular workflows",
   "author": {
     "name": "Mario Gómez",
@@ -16,6 +16,7 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node .",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
@@ -70,7 +71,10 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^src/(.*)$": "<rootDir>/$1"
+    }
   },
   "main": "dist/src/main"
 }
