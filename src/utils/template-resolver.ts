@@ -30,7 +30,7 @@ export function resolveTemplates(obj: any, ctx: IContext): any {
  * Example: "Hello {{vars.name}}" -> "Hello John"
  */
 function resolveString(template: string, ctx: IContext): string {
-  return template.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
+  return template.replace(/\{\{([^}]+)\}\}/g, (match: string, path: string) => {
     const value = getValueByPath(ctx, path.trim());
 
     if (value === undefined || value === null) {
