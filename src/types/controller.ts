@@ -1,4 +1,6 @@
+import { IFlow } from '.';
+
 export type IBody = {
-  flow: any;
-  vars?: any;
+  flow: IFlow;
+  vars?: Record<string, any>;
 };
