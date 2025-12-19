@@ -1,4 +1,6 @@
 import { createStepLog } from '../utils/logger';
+import { resolveTemplates } from '../utils/template-resolver';
+import { generateUUID } from '../utils/uuid';
 import { IStepRegistry, IContext, IFlow, IExecutor } from '../types';
 
 export class Executor implements IExecutor {
@@ -7,7 +9,7 @@ export class Executor implements IExecutor {
   async run(flow: IFlow, vars: Record<string, any>): Promise<IContext> {
     const ctx: IContext = {
       name: flow.name,
-      id: '123',
+      id: generateUUID(),
       vars: { ...vars },
       steps: {},
       logs: [],
@@ -98,7 +100,9 @@ export class Executor implements IExecutor {
 
         const StepCtor = this.registry.resolve(step.type);
         const instance = new StepCtor();
-        return await instance.run(ctx, step.settings || {});
+        
+        const resolvedSettings = resolveTemplates(step.settings || {}, ctx);
+        return await instance.run(ctx, resolvedSettings);
       } catch (error) {
         lastError = error;
         ctx.logs.push(

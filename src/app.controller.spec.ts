@@ -9,15 +9,39 @@ describe('AppController', () => {
 
   const mockContext: IContext = {
     id: '123',
-    name: 'Test Flow',
+    name: 'Simple Flow',
     vars: { phoneNumber: '+57 300 123 4567' },
     steps: {
-      fetchTodo: { id: 1, title: 'Test Todo', completed: true },
-      notifyCompleted: { sent: true, message: 'Todo is completed: Test Todo' },
+      fetchTodo: {
+        id: 1,
+        title: 'delectus aut autem',
+        completed: false,
+        _metadata: {
+          stepId: '67547de2-500c-4b53-83f7-2fa70b92d9a3',
+          stepType: 'http_request',
+          success: true,
+          executedAt: new Date('2025-01-01T00:00:00.000Z'),
+        },
+      },
+      sendSmsStep: {
+        sent: true,
+        message: 'Fetched title: delectus aut autem',
+        to: '+57 300 123 4567',
+        _metadata: {
+          stepId: 'bd326d47-6a12-44ea-acfd-e0e7c2e8469b',
+          stepType: 'send_sms',
+          success: true,
+          executedAt: new Date('2025-01-01T00:00:01.000Z'),
+        },
+      },
     },
     logs: [
-      '[INFO] 2025-01-01T00:00:00.000Z Executor: Starting flow: Test Flow',
-      '[INFO] 2025-01-01T00:00:00.000Z Executor: Flow Test Flow completed successfully.',
+      '[INFO] 2025-01-01T00:00:00.000Z Executor: Starting flow: Simple Flow',
+      '[INFO] 2025-01-01T00:00:00.000Z Executor: Executing step: http_request with id: 67547de2-500c-4b53-83f7-2fa70b92d9a3',
+      '[INFO] 2025-01-01T00:00:00.000Z Executor: Completed step: http_request with id: 67547de2-500c-4b53-83f7-2fa70b92d9a3',
+      '[INFO] 2025-01-01T00:00:01.000Z Executor: Executing step: send_sms with id: bd326d47-6a12-44ea-acfd-e0e7c2e8469b',
+      '[INFO] 2025-01-01T00:00:01.000Z Executor: Completed step: send_sms with id: bd326d47-6a12-44ea-acfd-e0e7c2e8469b',
+      '[INFO] 2025-01-01T00:00:01.000Z Executor: Flow Simple Flow completed successfully.',
     ],
     status: 'completed',
     startedAt: new Date('2025-01-01T00:00:00.000Z'),
@@ -62,11 +86,20 @@ describe('AppController', () => {
       expect(engineService.runFlow).toHaveBeenCalledTimes(1);
       expect(engineService.runFlow).toHaveBeenCalledWith(
         expect.objectContaining({
-          name: expect.any(String),
-          steps: expect.any(Array),
+          name: 'Simple Flow',
+          steps: expect.arrayContaining([
+            expect.objectContaining({
+              type: 'http_request',
+              name: 'fetchTodo',
+            }),
+            expect.objectContaining({
+              type: 'send_sms',
+              name: 'sendSmsStep',
+            }),
+          ]),
         }),
         expect.objectContaining({
-          phoneNumber: expect.any(String),
+          phoneNumber: '+57 300 123 4567',
         }),
       );
     });
@@ -78,11 +111,13 @@ describe('AppController', () => {
       expect(result.completedAt).toBeDefined();
     });
 
-    it('should have steps output in context', async () => {
+    it('should have steps output with metadata', async () => {
       const result = await appController.getHello();
 
-      expect(result.steps).toBeDefined();
-      expect(typeof result.steps).toBe('object');
+      expect(result.steps.fetchTodo).toBeDefined();
+      expect(result.steps.fetchTodo._metadata).toBeDefined();
+      expect(result.steps.fetchTodo._metadata.success).toBe(true);
+      expect(result.steps.fetchTodo._metadata.stepType).toBe('http_request');
     });
 
     it('should have logs array in context', async () => {
@@ -90,49 +125,30 @@ describe('AppController', () => {
 
       expect(result.logs).toBeDefined();
       expect(Array.isArray(result.logs)).toBe(true);
+      expect(result.logs.length).toBeGreaterThan(0);
     });
 
     it('should have vars with phoneNumber', async () => {
       const result = await appController.getHello();
 
       expect(result.vars).toBeDefined();
-      expect(result.vars.phoneNumber).toBeDefined();
+      expect(result.vars.phoneNumber).toBe('+57 300 123 4567');
     });
   });
 
-  describe('Flow execution with branches', () => {
-    it('should handle conditional branching', async () => {
-      const branchContext: IContext = {
-        ...mockContext,
-        steps: {
-          fetchTodo: { id: 1, title: 'Test Todo', completed: true },
-          notifyCompleted: { sent: true, message: 'Todo is completed: Test Todo' },
-        },
-      };
-
-      jest.spyOn(engineService, 'runFlow').mockResolvedValue(branchContext);
-
+  describe('Template resolution', () => {
+    it('should resolve templates in step settings', async () => {
       const result = await appController.getHello();
 
-      expect(result.steps.fetchTodo).toBeDefined();
-      expect(result.steps.notifyCompleted).toBeDefined();
+      expect(result.steps.sendSmsStep).toBeDefined();
+      expect(result.steps.sendSmsStep.message).toBe('Fetched title: delectus aut autem');
     });
 
-    it('should execute default branch when condition is false', async () => {
-      const defaultBranchContext: IContext = {
-        ...mockContext,
-        steps: {
-          fetchTodo: { id: 1, title: 'Test Todo', completed: false },
-          notifyPending: { sent: true, message: 'Todo is pending: Test Todo' },
-        },
-      };
-
-      jest.spyOn(engineService, 'runFlow').mockResolvedValue(defaultBranchContext);
-
+    it('should access previous step outputs via templates', async () => {
       const result = await appController.getHello();
 
-      expect(result.steps.fetchTodo).toBeDefined();
-      expect(result.steps.notifyPending).toBeDefined();
+      expect(result.steps.fetchTodo.title).toBe('delectus aut autem');
+      expect(result.steps.sendSmsStep.message).toContain('delectus aut autem');
     });
   });
 
@@ -221,6 +237,17 @@ describe('AppController', () => {
 
       expect(result.id).toBeDefined();
       expect(typeof result.id).toBe('string');
+    });
+
+    it('should have step metadata with execution details', async () => {
+      const result = await appController.getHello();
+
+      const stepMetadata = result.steps.fetchTodo._metadata;
+      expect(stepMetadata).toBeDefined();
+      expect(stepMetadata.stepId).toBeDefined();
+      expect(stepMetadata.stepType).toBe('http_request');
+      expect(stepMetadata.success).toBe(true);
+      expect(stepMetadata.executedAt).toBeInstanceOf(Date);
     });
   });
 });

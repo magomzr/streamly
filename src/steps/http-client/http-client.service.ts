@@ -10,23 +10,11 @@ export class HttpClientStep implements IStepExecutor {
     const { url, method = 'GET' } = settings;
 
     ctx.logs.push(
-      createStepLog(
-        'INFO',
-        HttpClientStep.name,
-        `Making ${method} request to ${url}`,
-      ),
+      createStepLog('INFO', HttpClientStep.name, `${method} request to ${url}`),
     );
 
     const res = await fetch(url);
     const data = await res.json();
-
-    ctx.logs.push(
-      createStepLog(
-        'INFO',
-        HttpClientStep.name,
-        `Received response from ${url}`,
-      ),
-    );
 
     return data;
   }

@@ -1,6 +1,6 @@
 # Streamly
 
-Streamly is a workflow automation engine inspired by tools like Zapier, Activepieces, and n8n, built with NestJS and TypeScript. It provides a clean, minimal, and extensible architecture for executing sequential workflows with context propagation, error handling, and modular step design.
+Streamly is a workflow automation engine inspired by tools like Zapier, Activepieces, and n8n, built with NestJS and TypeScript. It provides a clean, minimal, and extensible architecture for executing sequential workflows with context propagation, dynamic template resolution, error handling, and modular step design.
 
 ## Motivation
 
@@ -74,6 +74,36 @@ interface IContext {
 - `startedAt`/`completedAt`: Execution timestamps
 - `error`: Error details if flow fails
 
+### Template Resolution
+
+Streamly includes a powerful template resolver that dynamically replaces variables in step settings before execution:
+
+```typescript
+// Step settings with templates
+{
+  message: 'Todo: {{steps.fetchTodo.title}}';
+}
+
+// Resolved before step execution
+{
+  message: 'Todo: delectus aut autem';
+}
+```
+
+**Supported syntax:**
+
+- `{{vars.variableName}}` - Access input variables
+- `{{steps.stepName.field}}` - Access previous step outputs
+- `{{steps.stepName.nested.field}}` - Access nested properties
+- Works with strings, objects, and arrays
+
+**How it works:**
+
+1. Before each step executes, the Executor resolves all templates in `settings`
+2. Templates are replaced with actual values from the context
+3. Steps receive fully resolved settings (no template logic needed in steps)
+4. If a value doesn't exist, it's replaced with an empty string
+
 ### Step Output with Metadata
 
 Each step output includes execution metadata:
@@ -106,12 +136,26 @@ export class HttpClientStep implements IStepExecutor {
 
   async run(ctx: IContext, settings: any): Promise<any> {
     const { url, method = 'GET' } = settings;
+
+    ctx.logs.push(
+      createStepLog('INFO', 'HttpClientStep', `${method} request to ${url}`),
+    );
+
     const res = await fetch(url);
     const data = await res.json();
+
     return data;
   }
 }
 ```
+
+**Step best practices:**
+
+- Keep steps simple and focused on business logic
+- Don't handle errors with try-catch (let them propagate to Executor)
+- Only log INFO/WARN messages (Executor handles ERROR logging)
+- Return data directly (Executor adds metadata automatically)
+- Settings are already resolved (no need to handle templates)
 
 ---
 
@@ -130,6 +174,8 @@ export class HttpClientStep implements IStepExecutor {
       http-client.service.ts
     /send-sms
       send-sms.service.ts
+    /json-minifier
+      json-minifier.service.ts
   /types
     core.ts                 # Core interfaces
     engine.ts               # Engine interfaces
@@ -139,21 +185,41 @@ export class HttpClientStep implements IStepExecutor {
     steps.module.ts         # Steps module with auto-registration
   /utils
     logger.ts               # Logging utilities
+    template-resolver.ts    # Template variable resolution
+    uuid.ts                 # UUID generation
 ```
 
 ### Key Components
 
 **Engine Service**: Facade that coordinates flow execution through dependency injection.
 
-**Executor**: Iterates through flow steps, instantiates step executors, manages context, handles retries, and collects outputs.
+**Executor**: Iterates through flow steps, resolves templates, instantiates step executors, manages context, handles retries, and collects outputs.
+
+**Template Resolver**: Recursively resolves template variables in step settings before execution.
 
 **Step Registry**: Injectable registry that maps step types to their constructors. Steps are auto-registered on module initialization.
 
-**Step Executors**: Injectable services that implement business logic. Each step receives context and settings, returns output.
+**Step Executors**: Injectable services that implement business logic. Each step receives context and resolved settings, returns output.
 
 ---
 
 ## Features
+
+### Template Resolution
+
+Dynamic variable replacement in step settings:
+
+```typescript
+{
+  id: 'step-2',
+  type: 'send_sms',
+  settings: {
+    message: 'User {{vars.userName}} completed: {{steps.fetchTodo.title}}'
+  }
+}
+```
+
+The Executor automatically resolves templates before step execution, so steps receive clean, resolved data.
 
 ### Error Handling and Retry Logic
 
@@ -177,6 +243,14 @@ When a step fails:
 - Each retry is logged with WARN level
 - If all retries fail, the flow status becomes 'failed'
 - Error details are stored in `ctx.error`
+- Subsequent steps are skipped
+
+**Centralized error handling:**
+
+- Steps don't need try-catch blocks
+- Errors propagate naturally to the Executor
+- Executor logs all errors with full context
+- Clean separation between business logic and error handling
 
 ---
 
@@ -258,10 +332,10 @@ export class MyCustomStep implements IStepExecutor {
     // Access previous step outputs
     const previousData = ctx.steps.previousStepName;
 
-    // Add logs
+    // Add logs (only INFO/WARN, not ERROR)
     ctx.logs.push(createStepLog('INFO', 'MyCustomStep', 'Processing...'));
 
-    // Return output
+    // Return output (no try-catch needed)
     return { result: 'success' };
   }
 }
@@ -288,17 +362,19 @@ export class StepsModule implements OnModuleInit {
 ### Implemented
 
 - Sequential step execution
+- Dynamic template resolution for step settings
 - Context propagation with vars and step outputs
 - Step output metadata (stepId, stepType, success, executedAt)
 - Step registry with dependency injection
 - Auto-registration of steps on module init
 - Structured logging with timestamps and levels (INFO, WARN, ERROR)
-- Type-safe interfaces
+- Type-safe interfaces with clear separation of concerns
 - NestJS integration with full DI support
-- Error handling with detailed error context
+- Centralized error handling in Executor
 - Retry logic with configurable max attempts
 - Flow execution status tracking (running, completed, failed)
 - Execution timestamps (startedAt, completedAt)
+- Clean step architecture (no boilerplate error handling)
 
 ### Roadmap
 
@@ -311,6 +387,7 @@ export class StepsModule implements OnModuleInit {
 - Visual flow builder (Angular)
 - Step marketplace
 - Loop/iteration support
+- Advanced template operators (filters, transformations)
 
 ---
 
@@ -334,6 +411,10 @@ npm run start:dev
 npm run test
 ```
 
+### Testing Error Handling
+
+Access `GET /fail` to see a flow that intentionally fails with retry logic.
+
 ---
 
 ## Design Principles
@@ -344,6 +425,7 @@ npm run test
 - **Testability**: Dependency injection enables easy mocking and testing
 - **Scalability**: Architecture supports future enhancements (queues, parallel execution, etc.)
 - **Observability**: Comprehensive logging and execution metadata
+- **Clean Code**: Steps focus on business logic, framework handles infrastructure
 
 ---
 
