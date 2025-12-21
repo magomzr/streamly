@@ -1,37 +1,6 @@
-/*
-  Context that travels through the flow execution.
-  Contains variables, step outputs, logs, and execution metadata.
-*/
-export interface IContext {
-  id: string;
-  name: string;
-  status: 'running' | 'completed' | 'failed';
-  startedAt: Date;
-  completedAt?: Date;
-  vars: Record<string, any>;
-  steps: Record<string, any>;
-  logs: string[];
-  error?: {
-    stepId: string;
-    stepName?: string;
-    message: string;
-    attempt: number;
-  };
-}
-
-/*
-  Step definition from the UI/flow configuration.
-  Represents what the user configures.
-*/
-export interface IStepDefinition {
-  id: string;
-  name?: string;
-  type: string;
-  settings?: Record<string, any>;
-  retry?: {
-    maxAttempts?: number;
-  };
-}
+// Re-export shared types
+export type { IContext, IFlow, IStepDefinition } from '@streamly/shared';
+import type { IContext } from '@streamly/shared';
 
 /*
   Step implementation that can be executed.
@@ -39,15 +8,6 @@ export interface IStepDefinition {
 */
 export interface IStepExecutor {
   run(ctx: IContext, settings: any): Promise<any>;
-}
-
-/*
-  Flow definition containing name and step definitions.
-  Sent from the UI when creating a flow.
-*/
-export interface IFlow {
-  name: string;
-  steps: IStepDefinition[];
 }
 
 /*

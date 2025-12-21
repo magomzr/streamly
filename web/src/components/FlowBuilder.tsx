@@ -17,9 +17,9 @@ import { NodeConfigPanel } from './NodeConfigPanel.js';
 import { Sidebar } from './Sidebar.js';
 import { BottomToolbar } from './BottomToolbar.js';
 import { ExecutionView } from './ExecutionView.js';
-import type { StepData, StepType } from '../types/steps.js';
-import { STEP_LABELS } from '../types/steps.js';
-import { apiService, type FlowDefinition } from '../services/api.js';
+import type { StepData, StepType } from '../types.js';
+import { STEP_LABELS, type IFlow } from '@streamly/shared';
+import { apiService } from '../services/api.js';
 import { useExecutionStore } from '../stores/execution.js';
 
 const nodeTypes = {
@@ -114,7 +114,7 @@ export function FlowBuilder() {
     setShowExecution(true);
 
     try {
-      const flow: FlowDefinition = {
+      const flow: IFlow = {
         name: 'Flow from UI',
         steps: nodes.map((node) => ({
           id: node.id,

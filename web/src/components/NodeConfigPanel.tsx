@@ -1,6 +1,6 @@
 import { type Node } from '@xyflow/react';
-import type { StepData } from '../types/steps.js';
-import { STEP_SCHEMAS, type FieldSchema } from '../types/schemas.js';
+import type { StepData } from '../types.js';
+import { STEP_SCHEMAS, type FieldSchema } from '@streamly/shared';
 import { useState, useEffect } from 'react';
 
 interface NodeConfigPanelProps {

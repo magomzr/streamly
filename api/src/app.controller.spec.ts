@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppController } from './app.controller';
 import { EngineService } from './engine/engine.service';
-import { IContext } from './types';
+import type { IContext, IFlow } from './types';
 
 describe('AppController', () => {
   let controller: AppController;
@@ -44,11 +44,11 @@ describe('AppController', () => {
             {
               id: 'step-1',
               name: 'fetchData',
-              type: 'http_request',
+              type: 'http_request' as const,
               settings: { url: 'https://api.example.com/data' },
             },
           ],
-        },
+        } as IFlow,
         vars: { phoneNumber: '+1234567890' },
       };
 
