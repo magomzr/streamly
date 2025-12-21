@@ -1,6 +1,7 @@
 # 0.0.6
 - Include filter-array, sort-array, string-format and base64 encryption steps (#16)
 - Remove deprecated draft files (#17)
+- Include WARN logs when a template cannot be resolved (#18)
 
 # 0.0.5
 - Include delay, transform and webhook steps (#14)
