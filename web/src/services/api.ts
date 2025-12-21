@@ -1,40 +1,12 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-export interface FlowDefinition {
-  name: string;
-  steps: Array<{
-    id: string;
-    name?: string;
-    type: string;
-    settings?: Record<string, any>;
-    retry?: {
-      maxAttempts?: number;
-    };
-  }>;
-}
-
-export interface FlowExecutionResult {
-  id: string;
-  name: string;
-  vars: Record<string, any>;
-  steps: Record<string, any>;
-  logs: string[];
-  status: 'running' | 'completed' | 'failed';
-  startedAt: string;
-  completedAt?: string;
-  error?: {
-    stepId: string;
-    stepName?: string;
-    message: string;
-    attempt: number;
-  };
-}
+export type { IFlow, IExecutionResult } from '@streamly/shared';
 
 export const apiService = {
   async executeFlow(
-    flow: FlowDefinition,
+    flow: import('@streamly/shared').IFlow,
     vars: Record<string, any> = {},
-  ): Promise<FlowExecutionResult> {
+  ): Promise<import('@streamly/shared').IExecutionResult> {
     const response = await fetch(`${API_BASE_URL}/run`, {
       method: 'POST',
       headers: {

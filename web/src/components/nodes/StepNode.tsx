@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
-import type { StepData } from '../../types/steps.js';
+import type { StepData } from '../../types.js';
 
 interface StepNodeProps extends NodeProps {
   data: StepData;

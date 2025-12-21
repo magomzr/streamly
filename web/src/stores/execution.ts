@@ -1,12 +1,12 @@
 import { create } from 'zustand';
-import type { FlowExecutionResult } from '../services/api.js';
+import type { IExecutionResult } from '@streamly/shared';
 
 interface ExecutionState {
   isExecuting: boolean;
-  result: FlowExecutionResult | null;
+  result: IExecutionResult | null;
   error: string | null;
   setExecuting: (executing: boolean) => void;
-  setResult: (result: FlowExecutionResult | null) => void;
+  setResult: (result: IExecutionResult | null) => void;
   setError: (error: string | null) => void;
   reset: () => void;
 }

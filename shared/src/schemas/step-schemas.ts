@@ -1,4 +1,4 @@
-import type { StepType } from './steps.js';
+import type { StepType } from '../types/flow.js';
 
 export interface FieldSchema {
   name: string;

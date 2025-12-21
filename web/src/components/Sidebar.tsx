@@ -1,4 +1,4 @@
-import { STEP_LABELS, STEP_CATEGORIES, type StepType } from '../types/steps.js';
+import { STEP_LABELS, STEP_CATEGORIES, type StepType } from '@streamly/shared';
 
 export function Sidebar() {
   const onDragStart = (event: React.DragEvent, stepType: StepType) => {

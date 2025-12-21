@@ -1,10 +1,11 @@
 import { generateUUID } from '../utils';
+import type { IFlow } from '@streamly/shared';
 
 export const vars = {
   phoneNumber: '+57 300 123 4567',
 };
 
-export const sampleFlow = {
+export const sampleFlow: IFlow = {
   name: 'Simple Flow',
   steps: [
     {
@@ -30,7 +31,7 @@ export const sampleFlow = {
   ],
 };
 
-export const failingFlow = {
+export const failingFlow: IFlow = {
   name: 'Failing Flow',
   steps: [
     {
@@ -61,7 +62,7 @@ export const failingFlow = {
   ],
 };
 
-export const complexFlow = {
+export const complexFlow: IFlow = {
   name: 'Complex Flow - All Steps',
   steps: [
     {

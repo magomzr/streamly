@@ -3,6 +3,7 @@
 - Remove deprecated draft files (#17)
 - Include WARN logs when a template cannot be resolved (#18)
 - Make Streamly a monorepo to support UI (#20)
+- Implement shared folder to avoid redundancy (#21)
 
 # 0.0.5
 - Include delay, transform and webhook steps (#14)
