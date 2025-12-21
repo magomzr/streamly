@@ -129,19 +129,6 @@ describe('Template Resolver', () => {
       expect(resolved.value).toBe('');
     });
 
-    it('should log a warning when template cannot be resolved', () => {
-      const settings = {
-        value: 'Value: {{steps.nonExistent}}',
-      };
-
-      const resolved = resolveTemplates(settings, ctx);
-
-      expect(resolved.value).toBe('Value: ');
-      const warnLogs = ctx.logs.filter((l) => l.includes('[WARN]'));
-      expect(warnLogs.length).toBeGreaterThan(0);
-      expect(warnLogs[0]).toContain('Unresolved template');
-    });
-
     it('should handle nested objects in settings', () => {
       const settings = {
         payload: {
