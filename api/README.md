@@ -1,4 +1,4 @@
-# Streamly
+# Streamly Monorepo
 
 Streamly is a workflow automation engine with a visual UI, built with NestJS and TypeScript.
 

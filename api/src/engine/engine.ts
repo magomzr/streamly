@@ -2,9 +2,9 @@ import { IStepRegistry, IContext, IFlow } from '../types';
 import { Executor } from './executor';
 
 export class Engine {
-  private executor: Executor;
+  private readonly executor: Executor;
 
-  constructor(private registry: IStepRegistry) {
+  constructor(private readonly registry: IStepRegistry) {
     this.executor = new Executor(registry);
   }
 
