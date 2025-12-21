@@ -1,4 +1,5 @@
 import { IContext } from '../types';
+import { createStepLog } from './logger';
 
 /**
  * Resolves template variables in settings before step execution.
@@ -36,22 +37,44 @@ function resolveString(template: string, ctx: IContext): any {
   if (singleTemplateMatch) {
     const path = singleTemplateMatch[1].trim();
     const value = getValueByPath(ctx, path);
-    return value !== undefined && value !== null ? value : '';
-  }
-
-  return template.replace(/\{\{([^}]+)\}\}/g, (match: string, path: string) => {
-    const value = getValueByPath(ctx, path.trim());
-
     if (value === undefined || value === null) {
+      ctx.logs.push(
+        createStepLog(
+          'WARN',
+          'TemplateResolver',
+          `Unresolved template '{{${path}}}' for flow: ${ctx?.name ?? 'unknown'}`,
+        ),
+      );
       return '';
     }
 
-    if (typeof value === 'object') {
-      return JSON.stringify(value);
-    }
+    return value;
+  }
 
-    return String(value);
-  });
+  return template.replaceAll(
+    /\{\{([^}]+)\}\}/g,
+    (match: string, path: string) => {
+      const value = getValueByPath(ctx, path.trim());
+
+      if (value === undefined || value === null) {
+        ctx.logs.push(
+          createStepLog(
+            'WARN',
+            'TemplateResolver',
+            `Unresolved template '${match}' for flow: ${ctx?.name ?? 'unknown'}`,
+          ),
+        );
+
+        return '';
+      }
+
+      if (typeof value === 'object') {
+        return JSON.stringify(value);
+      }
+
+      return String(value);
+    },
+  );
 }
 
 /**
