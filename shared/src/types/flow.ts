@@ -15,6 +15,7 @@ export type StepType =
 export interface IStepDefinition {
   id: string;
   name?: string;
+  label?: string;
   type: StepType;
   settings?: Record<string, any>;
   retry?: {
