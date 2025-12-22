@@ -13,6 +13,7 @@ import {
   type Edge,
   useReactFlow,
   ReactFlowProvider,
+  MarkerType,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import dagre from 'dagre';
@@ -26,6 +27,7 @@ import { STEP_LABELS, type IFlow } from '@streamly/shared';
 import { apiService } from '../services/api.js';
 import { useExecutionStore } from '../stores/execution.js';
 import { useFlowStore } from '../stores/flow.js';
+import { generateUUID } from '../utils.js';
 
 const nodeTypes = {
   step: StepNode,
@@ -37,7 +39,7 @@ const initialEdges: any = [];
 const getLayoutedElements = (nodes: Node<StepData>[], edges: Edge[]) => {
   const dagreGraph = new dagre.graphlib.Graph();
   dagreGraph.setDefaultEdgeLabel(() => ({}));
-  dagreGraph.setGraph({ rankdir: 'TB', nodesep: 100, ranksep: 150 });
+  dagreGraph.setGraph({ rankdir: 'LR', nodesep: 100, ranksep: 150 });
 
   nodes.forEach((node) => {
     dagreGraph.setNode(node.id, { width: 180, height: 80 });
@@ -86,6 +88,27 @@ function FlowBuilderInner() {
     hasUnsavedChanges,
   } = useFlowStore();
 
+  const handleDeleteNode = useCallback(
+    (nodeId: string) => {
+      setNodes((nds) => nds.filter((n) => n.id !== nodeId));
+      setEdges((eds) =>
+        eds.filter((e) => e.source !== nodeId && e.target !== nodeId),
+      );
+      if (selectedNode?.id === nodeId) setSelectedNode(null);
+      setHasUnsavedChanges(true);
+    },
+    [setNodes, setEdges, selectedNode, setHasUnsavedChanges],
+  );
+
+  useCallback(() => {
+    const handleDeleteEvent = (e: Event) => {
+      const customEvent = e as CustomEvent<{ nodeId: string }>;
+      handleDeleteNode(customEvent.detail.nodeId);
+    };
+    window.addEventListener('deleteNode', handleDeleteEvent);
+    return () => window.removeEventListener('deleteNode', handleDeleteEvent);
+  }, [handleDeleteNode])();
+
   const handleEdgesChange = useCallback(
     (changes: any) => {
       onEdgesChange(changes);
@@ -96,7 +119,12 @@ function FlowBuilderInner() {
 
   const onConnect: OnConnect = useCallback(
     (params) => {
-      setEdges((eds) => addEdge(params, eds));
+      setEdges((eds) =>
+        addEdge(
+          { ...params, markerEnd: { type: MarkerType.ArrowClosed } },
+          eds,
+        ),
+      );
       setHasUnsavedChanges(true);
     },
     [setEdges, setHasUnsavedChanges],
@@ -164,7 +192,7 @@ function FlowBuilderInner() {
       }
 
       const newNode: Node<StepData> = {
-        id: `${Date.now()}`,
+        id: generateUUID(),
         type: 'step',
         position,
         data: {
@@ -182,9 +210,11 @@ function FlowBuilderInner() {
   );
 
   const buildFlow = useCallback((): IFlow => {
+    const orderedSteps = topologicalSort(nodes, edges);
+
     return {
       name: flowName,
-      steps: nodes.map((node) => ({
+      steps: orderedSteps.map((node) => ({
         id: node.id,
         name: node.data.stepId,
         type: node.data.stepType,
@@ -196,6 +226,46 @@ function FlowBuilderInner() {
       })),
     };
   }, [flowName, nodes, edges]);
+
+  const topologicalSort = (
+    nodes: Node<StepData>[],
+    edges: Edge[],
+  ): Node<StepData>[] => {
+    if (edges.length === 0) return nodes;
+
+    const graph = new Map<string, string[]>();
+    const inDegree = new Map<string, number>();
+
+    nodes.forEach((node) => {
+      graph.set(node.id, []);
+      inDegree.set(node.id, 0);
+    });
+
+    edges.forEach((edge) => {
+      graph.get(edge.source)?.push(edge.target);
+      inDegree.set(edge.target, (inDegree.get(edge.target) || 0) + 1);
+    });
+
+    const queue: string[] = [];
+    inDegree.forEach((degree, nodeId) => {
+      if (degree === 0) queue.push(nodeId);
+    });
+
+    const sorted: string[] = [];
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      sorted.push(current);
+
+      graph.get(current)?.forEach((neighbor) => {
+        const newDegree = inDegree.get(neighbor)! - 1;
+        inDegree.set(neighbor, newDegree);
+        if (newDegree === 0) queue.push(neighbor);
+      });
+    }
+
+    const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+    return sorted.map((id) => nodeMap.get(id)!).filter(Boolean);
+  };
 
   const handleSave = useCallback(async () => {
     setIsSaving(true);
@@ -238,6 +308,7 @@ function FlowBuilderInner() {
           id: `e${idx}`,
           source: edge.source,
           target: edge.target,
+          markerEnd: { type: MarkerType.ArrowClosed },
         })),
       );
       setCurrentFlowId(flowId);
@@ -273,7 +344,7 @@ function FlowBuilderInner() {
 
     try {
       let flowId = currentFlowId;
-      
+
       // Auto-save if needed
       if (!flowId || hasUnsavedChanges) {
         const flow = buildFlow();
@@ -293,7 +364,18 @@ function FlowBuilderInner() {
     } finally {
       setExecuting(false);
     }
-  }, [currentFlowId, hasUnsavedChanges, buildFlow, createFlow, updateFlow, setCurrentFlowId, vars, setExecuting, setResult, setError]);
+  }, [
+    currentFlowId,
+    hasUnsavedChanges,
+    buildFlow,
+    createFlow,
+    updateFlow,
+    setCurrentFlowId,
+    vars,
+    setExecuting,
+    setResult,
+    setError,
+  ]);
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>

@@ -6,7 +6,7 @@ interface StepNodeProps extends NodeProps {
   data: StepData;
 }
 
-export const StepNode = memo(({ data, selected }: StepNodeProps) => {
+export const StepNode = memo(({ data, selected, id }: StepNodeProps) => {
   const getNodeColor = (stepType: string) => {
     if (stepType.includes('http') || stepType === 'webhook') return '#3b82f6';
     if (stepType.includes('sms')) return '#10b981';
@@ -35,9 +35,10 @@ export const StepNode = memo(({ data, selected }: StepNodeProps) => {
           ? `0 0 0 2px ${color}40`
           : '0 1px 3px rgba(0,0,0,0.1)',
         transition: 'all 0.2s',
+        position: 'relative',
       }}
     >
-      <Handle type="target" position={Position.Top} />
+      <Handle type="target" position={Position.Left} />
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         <div
@@ -57,7 +58,45 @@ export const StepNode = memo(({ data, selected }: StepNodeProps) => {
         {data.stepType}
       </div>
 
-      <Handle type="source" position={Position.Bottom} />
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          if (confirm(`Delete step "${data.label}"?`)) {
+            const event = new CustomEvent('deleteNode', {
+              detail: { nodeId: id },
+            });
+            window.dispatchEvent(event);
+          }
+        }}
+        style={{
+          position: 'absolute',
+          top: '4px',
+          right: '4px',
+          width: '20px',
+          height: '20px',
+          border: 'none',
+          borderRadius: '4px',
+          backgroundColor: '#fee2e2',
+          color: '#dc2626',
+          cursor: 'pointer',
+          fontSize: '12px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          opacity: selected ? 1 : 0,
+          transition: 'opacity 0.2s',
+        }}
+        onMouseEnter={(e) =>
+          (e.currentTarget.style.backgroundColor = '#fecaca')
+        }
+        onMouseLeave={(e) =>
+          (e.currentTarget.style.backgroundColor = '#fee2e2')
+        }
+      >
+        ×
+      </button>
+
+      <Handle type="source" position={Position.Right} />
     </div>
   );
 });
