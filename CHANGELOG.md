@@ -1,3 +1,13 @@
+# 0.0.6
+- Include filter-array, sort-array, string-format and base64 encryption steps (#16)
+- Remove deprecated draft files (#17)
+- Include WARN logs when a template cannot be resolved (#18)
+- Make Streamly a monorepo to support UI (#20)
+- Implement shared folder to avoid redundancy (#21)
+- Include unit tests for all api/ steps (#22)
+- Implement a persistence layer to store flows (#23)
+- Implement opts dropdown, flow validation, dark mode and import/export JSON (#25)
+
 # 0.0.5
 - Include delay, transform and webhook steps (#14)
 
