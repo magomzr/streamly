@@ -237,6 +237,7 @@ function FlowBuilderInner() {
       steps: orderedSteps.map((node) => ({
         id: node.id,
         name: node.data.stepId,
+        label: node.data.label,
         type: node.data.stepType,
         settings: node.data.settings || {},
       })),
@@ -276,7 +277,7 @@ function FlowBuilderInner() {
         type: 'step' as const,
         position: { x: 0, y: 0 },
         data: {
-          label: step.name || 'Unnamed',
+          label: step.label || step.name || 'Unnamed',
           stepId: step.name || 'unnamed',
           stepType: step.type,
           settings: step.settings || {},
@@ -424,7 +425,7 @@ function FlowBuilderInner() {
           type: 'step' as const,
           position: { x: 0, y: 0 },
           data: {
-            label: step.name || 'Unnamed',
+            label: step.label || step.name || 'Unnamed',
             stepId: step.name || 'unnamed',
             stepType: step.type,
             settings: step.settings || {},
