@@ -24,4 +24,5 @@ export interface IStepDefinition {
 export interface IFlow {
   name: string;
   steps: IStepDefinition[];
+  edges?: Array<{ source: string; target: string }>;
 }

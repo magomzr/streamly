@@ -2,9 +2,9 @@
 
 ## Persistence
 
-- [ ] Add database support (PostgreSQL/MongoDB)
-- [ ] Implement flow CRUD operations
-- [ ] Store execution history
+- [x] Add database support (PostgreSQL/MongoDB)
+- [x] Implement flow CRUD operations
+- [x] Store execution history
 - [ ] Add flow versioning
 - [ ] Implement flow templates
 
@@ -45,7 +45,7 @@
 
 ## UI/UX Improvements
 
-- [ ] Save/load flows from UI
+- [x] Save/load flows from UI
 - [ ] Visual flow validation before execution
 - [ ] Real-time execution progress indicators
 - [ ] Dark mode support

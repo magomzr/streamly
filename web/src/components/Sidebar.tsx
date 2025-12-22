@@ -1,17 +1,37 @@
+import { useEffect } from 'react';
 import { STEP_LABELS, STEP_CATEGORIES, type StepType } from '@streamly/shared';
+import { useFlowStore } from '../stores/flow';
 
-export function Sidebar() {
+interface SidebarProps {
+  onLoadFlow: (flowId: string) => void;
+  onNewFlow: () => void;
+}
+
+export function Sidebar({ onLoadFlow, onNewFlow }: SidebarProps) {
+  const { flows, currentFlowId, isLoading, loadFlows, deleteFlow } =
+    useFlowStore();
+
+  useEffect(() => {
+    loadFlows();
+  }, [loadFlows]);
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (confirm('Delete this flow?')) {
+      await deleteFlow(id);
+    }
+  };
   const onDragStart = (event: React.DragEvent, stepType: StepType) => {
     event.dataTransfer.setData('application/reactflow', stepType);
     event.dataTransfer.effectAllowed = 'move';
   };
 
   const renderCategory = (title: string, steps: readonly StepType[]) => (
-    <div key={title} style={{ marginBottom: '20px' }}>
+    <div key={title} style={{ marginBottom: '16px' }}>
       <h4
         style={{
-          margin: '0 0 8px 0',
-          fontSize: '12px',
+          margin: '0 0 6px 0',
+          fontSize: '11px',
           fontWeight: 600,
           color: '#6b7280',
           textTransform: 'uppercase',
@@ -19,19 +39,19 @@ export function Sidebar() {
       >
         {title}
       </h4>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
         {steps.map((stepType) => (
           <div
             key={stepType}
             draggable
             onDragStart={(e) => onDragStart(e, stepType)}
             style={{
-              padding: '10px 12px',
+              padding: '8px 10px',
               backgroundColor: 'white',
               border: '1px solid #e5e7eb',
-              borderRadius: '6px',
+              borderRadius: '4px',
               cursor: 'grab',
-              fontSize: '13px',
+              fontSize: '12px',
               fontWeight: 500,
               transition: 'all 0.2s',
             }}
@@ -62,20 +82,113 @@ export function Sidebar() {
         height: '100%',
         backgroundColor: '#f9fafb',
         borderRight: '1px solid #e5e7eb',
-        padding: '20px',
         overflowY: 'auto',
-        boxShadow: '2px 0 8px rgba(0,0,0,0.05)',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
-      <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: 600 }}>
-        Steps
-      </h3>
+      <div style={{ padding: '16px', borderBottom: '1px solid #e5e7eb' }}>
+        <h3 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 600 }}>
+          Flows
+        </h3>
+        <button
+          onClick={onNewFlow}
+          style={{
+            width: '100%',
+            padding: '8px',
+            backgroundColor: '#3b82f6',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            fontSize: '12px',
+            fontWeight: 500,
+            cursor: 'pointer',
+            marginBottom: '8px',
+          }}
+        >
+          + New Flow
+        </button>
+        {isLoading ? (
+          <div
+            style={{
+              textAlign: 'center',
+              color: '#6b7280',
+              fontSize: '11px',
+              padding: '8px',
+            }}
+          >
+            Loading...
+          </div>
+        ) : flows.length === 0 ? (
+          <div
+            style={{
+              textAlign: 'center',
+              color: '#6b7280',
+              fontSize: '11px',
+              padding: '8px',
+            }}
+          >
+            No flows yet
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            {flows.map((flow) => (
+              <div
+                key={flow.id}
+                onClick={() => onLoadFlow(flow.id)}
+                style={{
+                  padding: '6px 8px',
+                  backgroundColor:
+                    currentFlowId === flow.id ? '#dbeafe' : 'white',
+                  border: `1px solid ${currentFlowId === flow.id ? '#93c5fd' : '#e5e7eb'}`,
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '11px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <span
+                  style={{
+                    fontWeight: 500,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {flow.name}
+                </span>
+                <button
+                  onClick={(e) => handleDelete(e, flow.id)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#ef4444',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    padding: '0 4px',
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
-      {renderCategory('HTTP', STEP_CATEGORIES.http)}
-      {renderCategory('Notifications', STEP_CATEGORIES.notifications)}
-      {renderCategory('Data Manipulation', STEP_CATEGORIES.dataManipulation)}
-      {renderCategory('Encoding', STEP_CATEGORIES.encoding)}
-      {renderCategory('Utilities', STEP_CATEGORIES.utilities)}
+      <div style={{ padding: '16px', flex: 1 }}>
+        <h3 style={{ margin: '0 0 16px 0', fontSize: '14px', fontWeight: 600 }}>
+          Steps
+        </h3>
+
+        {renderCategory('HTTP', STEP_CATEGORIES.http)}
+        {renderCategory('Notifications', STEP_CATEGORIES.notifications)}
+        {renderCategory('Data Manipulation', STEP_CATEGORIES.dataManipulation)}
+        {renderCategory('Encoding', STEP_CATEGORIES.encoding)}
+        {renderCategory('Utilities', STEP_CATEGORIES.utilities)}
+      </div>
     </div>
   );
 }

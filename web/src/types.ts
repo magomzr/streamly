@@ -3,6 +3,7 @@ import type { StepType } from '@streamly/shared';
 // StepData extends shared types with UI-specific properties
 export interface StepData extends Record<string, unknown> {
   label: string;
+  stepId: string;
   stepType: StepType;
   settings?: Record<string, any>;
 }
