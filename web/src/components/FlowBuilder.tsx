@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import {
   ReactFlow,
   MiniMap,
@@ -10,13 +10,11 @@ import {
   BackgroundVariant,
   type OnConnect,
   type Node,
-  type Edge,
   useReactFlow,
   ReactFlowProvider,
   MarkerType,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import dagre from 'dagre';
 import { StepNode } from './nodes/StepNode.js';
 import { NodeConfigPanel } from './NodeConfigPanel.js';
 import { Sidebar } from './Sidebar.js';
@@ -27,7 +25,13 @@ import { STEP_LABELS, type IFlow } from '@streamly/shared';
 import { apiService } from '../services/api.js';
 import { useExecutionStore } from '../stores/execution.js';
 import { useFlowStore } from '../stores/flow.js';
-import { generateUUID } from '../utils.js';
+import { useThemeStore } from '../stores/theme.js';
+import {
+  generateUUID,
+  getLayoutedElements,
+  topologicalSort,
+  validateFlow,
+} from '../utils/index.js';
 
 const nodeTypes = {
   step: StepNode,
@@ -35,35 +39,6 @@ const nodeTypes = {
 
 const initialNodes: Node<StepData>[] = [];
 const initialEdges: any = [];
-
-const getLayoutedElements = (nodes: Node<StepData>[], edges: Edge[]) => {
-  const dagreGraph = new dagre.graphlib.Graph();
-  dagreGraph.setDefaultEdgeLabel(() => ({}));
-  dagreGraph.setGraph({ rankdir: 'LR', nodesep: 100, ranksep: 150 });
-
-  nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, { width: 180, height: 80 });
-  });
-
-  edges.forEach((edge) => {
-    dagreGraph.setEdge(edge.source, edge.target);
-  });
-
-  dagre.layout(dagreGraph);
-
-  const layoutedNodes = nodes.map((node) => {
-    const nodeWithPosition = dagreGraph.node(node.id);
-    return {
-      ...node,
-      position: {
-        x: nodeWithPosition.x - 90,
-        y: nodeWithPosition.y - 40,
-      },
-    } as Node<StepData>;
-  });
-
-  return { nodes: layoutedNodes, edges };
-};
 
 function FlowBuilderInner() {
   const { fitView } = useReactFlow();
@@ -76,6 +51,9 @@ function FlowBuilderInner() {
   const [showVarsEditor, setShowVarsEditor] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
+  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [showValidation, setShowValidation] = useState(false);
   const { isExecuting, setExecuting, setResult, setError } =
     useExecutionStore();
   const {
@@ -87,6 +65,11 @@ function FlowBuilderInner() {
     setHasUnsavedChanges,
     hasUnsavedChanges,
   } = useFlowStore();
+  const { isDark, toggleTheme } = useThemeStore();
+
+  useEffect(() => {
+    document.body.style.backgroundColor = isDark ? '#111827' : '#ffffff';
+  }, [isDark]);
 
   const handleDeleteNode = useCallback(
     (nodeId: string) => {
@@ -227,46 +210,6 @@ function FlowBuilderInner() {
     };
   }, [flowName, nodes, edges]);
 
-  const topologicalSort = (
-    nodes: Node<StepData>[],
-    edges: Edge[],
-  ): Node<StepData>[] => {
-    if (edges.length === 0) return nodes;
-
-    const graph = new Map<string, string[]>();
-    const inDegree = new Map<string, number>();
-
-    nodes.forEach((node) => {
-      graph.set(node.id, []);
-      inDegree.set(node.id, 0);
-    });
-
-    edges.forEach((edge) => {
-      graph.get(edge.source)?.push(edge.target);
-      inDegree.set(edge.target, (inDegree.get(edge.target) || 0) + 1);
-    });
-
-    const queue: string[] = [];
-    inDegree.forEach((degree, nodeId) => {
-      if (degree === 0) queue.push(nodeId);
-    });
-
-    const sorted: string[] = [];
-    while (queue.length > 0) {
-      const current = queue.shift()!;
-      sorted.push(current);
-
-      graph.get(current)?.forEach((neighbor) => {
-        const newDegree = inDegree.get(neighbor)! - 1;
-        inDegree.set(neighbor, newDegree);
-        if (newDegree === 0) queue.push(neighbor);
-      });
-    }
-
-    const nodeMap = new Map(nodes.map((n) => [n.id, n]));
-    return sorted.map((id) => nodeMap.get(id)!).filter(Boolean);
-  };
-
   const handleSave = useCallback(async () => {
     setIsSaving(true);
     try {
@@ -377,9 +320,74 @@ function FlowBuilderInner() {
     setError,
   ]);
 
+  const handleExportJSON = useCallback(() => {
+    const flow = buildFlow();
+    const dataStr = JSON.stringify(flow, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${flowName.replace(/\s+/g, '_')}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }, [buildFlow, flowName]);
+
+  const handleImportJSON = useCallback(() => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const imported: IFlow = JSON.parse(text);
+
+        setFlowName(imported.name);
+        setNodes(
+          imported.steps.map((step, idx) => ({
+            id: step.id,
+            type: 'step' as const,
+            position: { x: 100 + idx * 200, y: 100 },
+            data: {
+              label: step.name || 'Unnamed',
+              stepId: step.name || 'unnamed',
+              stepType: step.type,
+              settings: step.settings || {},
+            },
+          })),
+        );
+        setEdges(
+          (imported.edges || []).map((edge, idx) => ({
+            id: `e${idx}`,
+            source: edge.source,
+            target: edge.target,
+            markerEnd: { type: MarkerType.ArrowClosed },
+          })),
+        );
+        setCurrentFlowId(null);
+        setHasUnsavedChanges(true);
+      } catch (err) {
+        alert('Failed to import flow: Invalid JSON');
+      }
+    };
+    input.click();
+  }, [setNodes, setEdges, setCurrentFlowId, setHasUnsavedChanges]);
+
+  const handleValidate = useCallback(() => {
+    const errors = validateFlow(nodes, edges);
+    setValidationErrors(errors);
+    setShowValidation(true);
+  }, [nodes, edges]);
+
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
-      <Sidebar onLoadFlow={handleLoadFlow} onNewFlow={handleNewFlow} />
+      <Sidebar
+        onLoadFlow={handleLoadFlow}
+        onNewFlow={handleNewFlow}
+        isDark={isDark}
+      />
 
       <div
         style={{
@@ -412,6 +420,7 @@ function FlowBuilderInner() {
         selectedNode={selectedNode}
         onClose={() => setSelectedNode(null)}
         onUpdate={handleNodeUpdate}
+        isDark={isDark}
       />
 
       <div
@@ -420,10 +429,12 @@ function FlowBuilderInner() {
           bottom: '20px',
           left: '50%',
           transform: 'translateX(-50%)',
-          backgroundColor: 'white',
+          backgroundColor: isDark ? '#1f2937' : 'white',
           padding: '12px 20px',
           borderRadius: '8px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+          boxShadow: isDark
+            ? '0 2px 8px rgba(0,0,0,0.5)'
+            : '0 2px 8px rgba(0,0,0,0.15)',
           display: 'flex',
           gap: '12px',
           alignItems: 'center',
@@ -433,7 +444,7 @@ function FlowBuilderInner() {
         <div
           style={{
             fontSize: '14px',
-            color: '#6b7280',
+            color: isDark ? '#d1d5db' : '#6b7280',
             marginRight: '8px',
             display: 'flex',
             alignItems: 'center',
@@ -485,21 +496,175 @@ function FlowBuilderInner() {
           {hasUnsavedChanges && <span style={{ color: '#f59e0b' }}>•</span>}
         </div>
 
-        <button
-          onClick={handleAutoLayout}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: 'white',
-            color: '#6b7280',
-            border: '1px solid #e5e7eb',
-            borderRadius: '6px',
-            fontSize: '14px',
-            fontWeight: 500,
-            cursor: 'pointer',
-          }}
-        >
-          Auto Layout
-        </button>
+        <div style={{ position: 'relative' }}>
+          <button
+            onClick={() => setShowOptionsMenu(!showOptionsMenu)}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: 'white',
+              color: '#6b7280',
+              border: '1px solid #e5e7eb',
+              borderRadius: '6px',
+              fontSize: '14px',
+              fontWeight: 500,
+              cursor: 'pointer',
+            }}
+          >
+            Options ▾
+          </button>
+
+          {showOptionsMenu && (
+            <>
+              <div
+                style={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  zIndex: 999,
+                }}
+                onClick={() => setShowOptionsMenu(false)}
+              />
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '100%',
+                  left: 0,
+                  marginBottom: '8px',
+                  backgroundColor: 'white',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '6px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  minWidth: '160px',
+                  zIndex: 1000,
+                }}
+              >
+                <button
+                  onClick={() => {
+                    handleAutoLayout();
+                    setShowOptionsMenu(false);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '10px 16px',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    color: '#374151',
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = '#f3f4f6')
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = 'transparent')
+                  }
+                >
+                  Auto Layout
+                </button>
+                <button
+                  onClick={() => {
+                    handleValidate();
+                    setShowOptionsMenu(false);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '10px 16px',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    color: '#374151',
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = '#f3f4f6')
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = 'transparent')
+                  }
+                >
+                  ✓ Validate Flow
+                </button>
+                <button
+                  onClick={() => {
+                    toggleTheme();
+                    setShowOptionsMenu(false);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '10px 16px',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    color: '#374151',
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = '#f3f4f6')
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = 'transparent')
+                  }
+                >
+                  {isDark ? '☀️' : '☽️'} {isDark ? 'Light' : 'Dark'} Mode
+                </button>
+                <button
+                  onClick={() => {
+                    handleExportJSON();
+                    setShowOptionsMenu(false);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '10px 16px',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    color: '#374151',
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = '#f3f4f6')
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = 'transparent')
+                  }
+                >
+                  ↓ Export JSON
+                </button>
+                <button
+                  onClick={() => {
+                    handleImportJSON();
+                    setShowOptionsMenu(false);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '10px 16px',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    color: '#374151',
+                    borderRadius: '0 0 6px 6px',
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = '#f3f4f6')
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = 'transparent')
+                  }
+                >
+                  ↑ Import JSON
+                </button>
+              </div>
+            </>
+          )}
+        </div>
 
         <button
           onClick={handleSave}
@@ -566,6 +731,144 @@ function FlowBuilderInner() {
 
       {showExecution && (
         <ExecutionView onClose={() => setShowExecution(false)} />
+      )}
+
+      {showValidation && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => setShowValidation(false)}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              padding: '24px',
+              maxWidth: '500px',
+              width: '90%',
+              maxHeight: '80vh',
+              overflowY: 'auto',
+              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '16px',
+              }}
+            >
+              <h3
+                style={{
+                  margin: 0,
+                  fontSize: '18px',
+                  fontWeight: 600,
+                  color: '#111827',
+                }}
+              >
+                Flow Validation
+              </h3>
+              <button
+                onClick={() => setShowValidation(false)}
+                style={{
+                  border: 'none',
+                  background: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#6b7280',
+                  padding: 0,
+                  lineHeight: 1,
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {validationErrors.length === 0 ? (
+              <div
+                style={{
+                  padding: '16px',
+                  backgroundColor: '#d1fae5',
+                  border: '1px solid #a7f3d0',
+                  borderRadius: '6px',
+                  color: '#065f46',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}
+              >
+                <span style={{ fontSize: '20px' }}>✓</span>
+                <span style={{ fontWeight: 500 }}>Flow is valid!</span>
+              </div>
+            ) : (
+              <div>
+                <div
+                  style={{
+                    padding: '12px',
+                    backgroundColor: '#fee2e2',
+                    border: '1px solid #fecaca',
+                    borderRadius: '6px',
+                    marginBottom: '16px',
+                  }}
+                >
+                  <div
+                    style={{
+                      fontWeight: 600,
+                      color: '#991b1b',
+                      marginBottom: '8px',
+                    }}
+                  >
+                    Found {validationErrors.length} issue
+                    {validationErrors.length > 1 ? 's' : ''}:
+                  </div>
+                  <ul
+                    style={{
+                      margin: 0,
+                      paddingLeft: '20px',
+                      color: '#991b1b',
+                    }}
+                  >
+                    {validationErrors.map((error, i) => (
+                      <li key={i} style={{ marginBottom: '4px' }}>
+                        {error}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={() => setShowValidation(false)}
+              style={{
+                width: '100%',
+                padding: '10px',
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                marginTop: '16px',
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

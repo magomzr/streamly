@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/magomzr/streamly/actions/workflows/ci.yml/badge.svg)](https://github.com/magomzr/streamly/actions/workflows/ci.yml)
 
+![Streamly](./documentation/streamly.png)
+
 Streamly is a workflow automation engine with a visual UI, built with NestJS and TypeScript.
 
 ## Project Structure

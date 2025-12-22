@@ -8,12 +8,14 @@ interface NodeConfigPanelProps {
   selectedNode: Node<StepData> | null;
   onClose: () => void;
   onUpdate: (nodeId: string, data: Partial<StepData>) => void;
+  isDark: boolean;
 }
 
 export function NodeConfigPanel({
   selectedNode,
   onClose,
   onUpdate,
+  isDark,
 }: NodeConfigPanelProps) {
   const [settings, setSettings] = useState<Record<string, any>>({});
   const { result } = useExecutionStore();
@@ -144,11 +146,14 @@ export function NodeConfigPanel({
         right: 0,
         width: '320px',
         height: '100%',
-        backgroundColor: 'white',
-        borderLeft: '1px solid #e5e7eb',
+        backgroundColor: isDark ? '#1f2937' : 'white',
+        borderLeft: isDark ? '1px solid #374151' : '1px solid #e5e7eb',
         padding: '20px',
         overflowY: 'auto',
-        boxShadow: '-2px 0 8px rgba(0,0,0,0.1)',
+        boxShadow: isDark
+          ? '-2px 0 8px rgba(0,0,0,0.5)'
+          : '-2px 0 8px rgba(0,0,0,0.1)',
+        color: isDark ? '#f3f4f6' : '#111827',
       }}
     >
       <div

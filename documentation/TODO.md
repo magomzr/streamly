@@ -46,14 +46,26 @@
 ## UI/UX Improvements
 
 - [x] Save/load flows from UI
-- [ ] Visual flow validation before execution
+- [x] Delete flows from UI
+- [x] Visual node connections with arrows
+- [x] Horizontal flow layout (left-to-right)
+- [x] Auto-layout with dagre
+- [x] Inline flow name editing
+- [x] Delete nodes with confirmation
+- [x] Topological sort for execution order
+- [x] Step output display in config panel
+- [x] Unique step IDs with auto-increment
+- [x] Execution duration display
+- [x] Unsaved changes indicator
+- [x] Auto-save before execution
+- [x] Minimap for large flows
+- [x] Visual flow validation before execution
+- [x] Export/import flows as JSON
+- [x] Dark mode support
 - [ ] Real-time execution progress indicators
-- [ ] Dark mode support
-- [ ] Export/import flows as JSON
 - [ ] Undo/redo functionality
 - [ ] Flow search and filtering
 - [ ] Keyboard shortcuts
-- [ ] Minimap for large flows
 
 ## Production Readiness
 
@@ -70,6 +82,9 @@
 
 ## Testing
 
+- [x] Unit tests for all steps
+- [x] Unit tests for engine components
+- [x] Unit tests for utilities
 - [ ] E2E tests for Web UI (Playwright)
 - [ ] Integration tests (API + Web)
 - [ ] Performance tests for large flows
@@ -78,6 +93,9 @@
 
 ## Developer Experience
 
+- [x] Monorepo with pnpm workspaces
+- [x] Shared types and schemas package
+- [x] Step metadata system (labels, categories, schemas)
 - [ ] Hot reload for steps during development
 - [ ] Playground for testing individual steps
 - [ ] Step development CLI tool
@@ -88,6 +106,8 @@
 
 ## Documentation
 
+- [x] README with getting started guide
+- [x] Adding new steps guide
 - [ ] Architecture decision records (ADRs)
 - [ ] API reference documentation
 - [ ] Step development guide
