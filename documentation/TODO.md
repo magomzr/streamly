@@ -59,10 +59,10 @@
 - [x] Unsaved changes indicator
 - [x] Auto-save before execution
 - [x] Minimap for large flows
-- [ ] Visual flow validation before execution
+- [x] Visual flow validation before execution
+- [x] Export/import flows as JSON
+- [x] Dark mode support
 - [ ] Real-time execution progress indicators
-- [ ] Dark mode support
-- [ ] Export/import flows as JSON
 - [ ] Undo/redo functionality
 - [ ] Flow search and filtering
 - [ ] Keyboard shortcuts

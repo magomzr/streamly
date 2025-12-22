@@ -10,25 +10,28 @@ import {
   BackgroundVariant,
   type OnConnect,
   type Node,
-  type Edge,
   useReactFlow,
   ReactFlowProvider,
   MarkerType,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import dagre from 'dagre';
 import { StepNode } from './nodes/StepNode.js';
 import { NodeConfigPanel } from './NodeConfigPanel.js';
 import { Sidebar } from './Sidebar.js';
 import { ExecutionView } from './ExecutionView.js';
 import { VarsEditor } from './VarsEditor.js';
 import type { StepData, StepType } from '../types.js';
-import { STEP_LABELS, STEP_SCHEMAS, type IFlow } from '@streamly/shared';
+import { STEP_LABELS, type IFlow } from '@streamly/shared';
 import { apiService } from '../services/api.js';
 import { useExecutionStore } from '../stores/execution.js';
 import { useFlowStore } from '../stores/flow.js';
 import { useThemeStore } from '../stores/theme.js';
-import { generateUUID } from '../utils.js';
+import {
+  generateUUID,
+  getLayoutedElements,
+  topologicalSort,
+  validateFlow,
+} from '../utils/index.js';
 
 const nodeTypes = {
   step: StepNode,
@@ -36,35 +39,6 @@ const nodeTypes = {
 
 const initialNodes: Node<StepData>[] = [];
 const initialEdges: any = [];
-
-const getLayoutedElements = (nodes: Node<StepData>[], edges: Edge[]) => {
-  const dagreGraph = new dagre.graphlib.Graph();
-  dagreGraph.setDefaultEdgeLabel(() => ({}));
-  dagreGraph.setGraph({ rankdir: 'LR', nodesep: 100, ranksep: 150 });
-
-  nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, { width: 180, height: 80 });
-  });
-
-  edges.forEach((edge) => {
-    dagreGraph.setEdge(edge.source, edge.target);
-  });
-
-  dagre.layout(dagreGraph);
-
-  const layoutedNodes = nodes.map((node) => {
-    const nodeWithPosition = dagreGraph.node(node.id);
-    return {
-      ...node,
-      position: {
-        x: nodeWithPosition.x - 90,
-        y: nodeWithPosition.y - 40,
-      },
-    } as Node<StepData>;
-  });
-
-  return { nodes: layoutedNodes, edges };
-};
 
 function FlowBuilderInner() {
   const { fitView } = useReactFlow();
@@ -236,46 +210,6 @@ function FlowBuilderInner() {
     };
   }, [flowName, nodes, edges]);
 
-  const topologicalSort = (
-    nodes: Node<StepData>[],
-    edges: Edge[],
-  ): Node<StepData>[] => {
-    if (edges.length === 0) return nodes;
-
-    const graph = new Map<string, string[]>();
-    const inDegree = new Map<string, number>();
-
-    nodes.forEach((node) => {
-      graph.set(node.id, []);
-      inDegree.set(node.id, 0);
-    });
-
-    edges.forEach((edge) => {
-      graph.get(edge.source)?.push(edge.target);
-      inDegree.set(edge.target, (inDegree.get(edge.target) || 0) + 1);
-    });
-
-    const queue: string[] = [];
-    inDegree.forEach((degree, nodeId) => {
-      if (degree === 0) queue.push(nodeId);
-    });
-
-    const sorted: string[] = [];
-    while (queue.length > 0) {
-      const current = queue.shift()!;
-      sorted.push(current);
-
-      graph.get(current)?.forEach((neighbor) => {
-        const newDegree = inDegree.get(neighbor)! - 1;
-        inDegree.set(neighbor, newDegree);
-        if (newDegree === 0) queue.push(neighbor);
-      });
-    }
-
-    const nodeMap = new Map(nodes.map((n) => [n.id, n]));
-    return sorted.map((id) => nodeMap.get(id)!).filter(Boolean);
-  };
-
   const handleSave = useCallback(async () => {
     setIsSaving(true);
     try {
@@ -441,93 +375,11 @@ function FlowBuilderInner() {
     input.click();
   }, [setNodes, setEdges, setCurrentFlowId, setHasUnsavedChanges]);
 
-  const validateFlow = useCallback(() => {
-    const errors: string[] = [];
-
-    // Check if flow is empty
-    if (nodes.length === 0) {
-      errors.push('Flow is empty. Add at least one step.');
-      return errors;
-    }
-
-    // Check for disconnected nodes (if there are edges)
-    if (edges.length > 0) {
-      const connectedNodes = new Set<string>();
-      edges.forEach((edge) => {
-        connectedNodes.add(edge.source);
-        connectedNodes.add(edge.target);
-      });
-      nodes.forEach((node) => {
-        if (!connectedNodes.has(node.id)) {
-          errors.push(`Step "${node.data.label}" is not connected`);
-        }
-      });
-    }
-
-    // Check for cycles
-    const hasCycle = () => {
-      const visited = new Set<string>();
-      const recStack = new Set<string>();
-      const graph = new Map<string, string[]>();
-
-      nodes.forEach((node) => graph.set(node.id, []));
-      edges.forEach((edge) => {
-        graph.get(edge.source)?.push(edge.target);
-      });
-
-      const dfs = (nodeId: string): boolean => {
-        visited.add(nodeId);
-        recStack.add(nodeId);
-
-        for (const neighbor of graph.get(nodeId) || []) {
-          if (!visited.has(neighbor)) {
-            if (dfs(neighbor)) return true;
-          } else if (recStack.has(neighbor)) {
-            return true;
-          }
-        }
-
-        recStack.delete(nodeId);
-        return false;
-      };
-
-      for (const nodeId of graph.keys()) {
-        if (!visited.has(nodeId)) {
-          if (dfs(nodeId)) return true;
-        }
-      }
-      return false;
-    };
-
-    if (hasCycle()) {
-      errors.push('Flow contains a cycle (infinite loop detected)');
-    }
-
-    // Check for required fields
-    nodes.forEach((node) => {
-      const schema = STEP_SCHEMAS[node.data.stepType];
-      if (!schema) return;
-
-      schema.forEach((field) => {
-        if (field.required) {
-          const value = node.data.settings?.[field.name];
-          if (value === undefined || value === null || value === '') {
-            errors.push(
-              `Step "${node.data.label}": Required field "${field.label}" is empty`,
-            );
-          }
-        }
-      });
-    });
-
-    return errors;
-  }, [nodes, edges]);
-
   const handleValidate = useCallback(() => {
-    const errors = validateFlow();
+    const errors = validateFlow(nodes, edges);
     setValidationErrors(errors);
     setShowValidation(true);
-  }, [validateFlow]);
+  }, [nodes, edges]);
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>

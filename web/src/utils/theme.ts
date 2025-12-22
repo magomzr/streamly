@@ -1,7 +1,3 @@
-export function generateUUID(): string {
-  return crypto.randomUUID();
-}
-
 export const getThemeColors = (isDark: boolean) => ({
   bg: isDark ? '#1f2937' : '#ffffff',
   bgSecondary: isDark ? '#374151' : '#f9fafb',
