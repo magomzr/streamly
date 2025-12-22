@@ -1,6 +1,7 @@
 ## 0.0.7
 
 - Implement conditional/branching step (#28)
+- Fix layout rendering when loading a flow (#29)
 
 ## 0.0.6
 

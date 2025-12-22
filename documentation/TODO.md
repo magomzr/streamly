@@ -4,7 +4,6 @@
 
 ### Critical Steps (Control Flow)
 
-- [ ] Conditional step (if/else branching)
 - [ ] Loop step (for_each iteration)
 - [ ] Parallel execution step
 

@@ -271,57 +271,67 @@ function FlowBuilderInner() {
       if (!flow) return;
 
       setFlowName(flow.data.name);
-      setNodes(
-        flow.data.steps.map((step, idx) => ({
-          id: step.id,
-          type: 'step' as const,
-          position: { x: 100 + idx * 200, y: 100 },
-          data: {
-            label: step.name || 'Unnamed',
-            stepId: step.name || 'unnamed',
-            stepType: step.type,
-            settings: step.settings || {},
+      const loadedNodes = flow.data.steps.map((step) => ({
+        id: step.id,
+        type: 'step' as const,
+        position: { x: 0, y: 0 },
+        data: {
+          label: step.name || 'Unnamed',
+          stepId: step.name || 'unnamed',
+          stepType: step.type,
+          settings: step.settings || {},
+        },
+      }));
+      const loadedEdges = (flow.data.edges || []).map((edge, idx) => {
+        const isConditional = edge.branch !== undefined;
+        return {
+          id: `e${idx}`,
+          source: edge.source,
+          target: edge.target,
+          sourceHandle: edge.branch || 'default',
+          label: isConditional ? edge.branch?.toUpperCase() : undefined,
+          style: isConditional
+            ? {
+                stroke: edge.branch === 'true' ? '#10b981' : '#ef4444',
+                strokeWidth: 2,
+              }
+            : {},
+          labelStyle: isConditional
+            ? {
+                fill: edge.branch === 'true' ? '#10b981' : '#ef4444',
+                fontWeight: 600,
+                fontSize: 12,
+              }
+            : {},
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            color: isConditional
+              ? edge.branch === 'true'
+                ? '#10b981'
+                : '#ef4444'
+              : undefined,
           },
-        })),
-      );
-      setEdges(
-        (flow.data.edges || []).map((edge, idx) => {
-          const isConditional = edge.branch !== undefined;
-          return {
-            id: `e${idx}`,
-            source: edge.source,
-            target: edge.target,
-            sourceHandle: edge.branch || 'default',
-            label: isConditional ? edge.branch?.toUpperCase() : undefined,
-            style: isConditional
-              ? {
-                  stroke: edge.branch === 'true' ? '#10b981' : '#ef4444',
-                  strokeWidth: 2,
-                }
-              : {},
-            labelStyle: isConditional
-              ? {
-                  fill: edge.branch === 'true' ? '#10b981' : '#ef4444',
-                  fontWeight: 600,
-                  fontSize: 12,
-                }
-              : {},
-            markerEnd: {
-              type: MarkerType.ArrowClosed,
-              color: isConditional
-                ? edge.branch === 'true'
-                  ? '#10b981'
-                  : '#ef4444'
-                : undefined,
-            },
-            data: { branch: edge.branch },
-          };
-        }),
-      );
+          data: { branch: edge.branch },
+        };
+      });
+
+      const { nodes: layoutedNodes, edges: layoutedEdges } =
+        getLayoutedElements(loadedNodes, loadedEdges);
+
+      setNodes(layoutedNodes);
+      setEdges(layoutedEdges);
       setCurrentFlowId(flowId);
       setHasUnsavedChanges(false);
+      setTimeout(() => fitView({ duration: 200 }), 0);
     },
-    [flows, setNodes, setEdges, setCurrentFlowId, setHasUnsavedChanges],
+    [
+      flows,
+      setNodes,
+      setEdges,
+      setCurrentFlowId,
+      setHasUnsavedChanges,
+      fitView,
+    ],
   );
 
   const handleNewFlow = useCallback(() => {
@@ -409,61 +419,64 @@ function FlowBuilderInner() {
         const imported: IFlow = JSON.parse(text);
 
         setFlowName(imported.name);
-        setNodes(
-          imported.steps.map((step, idx) => ({
-            id: step.id,
-            type: 'step' as const,
-            position: { x: 100 + idx * 200, y: 100 },
-            data: {
-              label: step.name || 'Unnamed',
-              stepId: step.name || 'unnamed',
-              stepType: step.type,
-              settings: step.settings || {},
+        const loadedNodes = imported.steps.map((step) => ({
+          id: step.id,
+          type: 'step' as const,
+          position: { x: 0, y: 0 },
+          data: {
+            label: step.name || 'Unnamed',
+            stepId: step.name || 'unnamed',
+            stepType: step.type,
+            settings: step.settings || {},
+          },
+        }));
+        const loadedEdges = (imported.edges || []).map((edge, idx) => {
+          const isConditional = edge.branch !== undefined;
+          return {
+            id: `e${idx}`,
+            source: edge.source,
+            target: edge.target,
+            sourceHandle: edge.branch || 'default',
+            label: isConditional ? edge.branch?.toUpperCase() : undefined,
+            style: isConditional
+              ? {
+                  stroke: edge.branch === 'true' ? '#10b981' : '#ef4444',
+                  strokeWidth: 2,
+                }
+              : {},
+            labelStyle: isConditional
+              ? {
+                  fill: edge.branch === 'true' ? '#10b981' : '#ef4444',
+                  fontWeight: 600,
+                  fontSize: 12,
+                }
+              : {},
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              color: isConditional
+                ? edge.branch === 'true'
+                  ? '#10b981'
+                  : '#ef4444'
+                : undefined,
             },
-          })),
-        );
-        setEdges(
-          (imported.edges || []).map((edge, idx) => {
-            const isConditional = edge.branch !== undefined;
-            return {
-              id: `e${idx}`,
-              source: edge.source,
-              target: edge.target,
-              sourceHandle: edge.branch || 'default',
-              label: isConditional ? edge.branch?.toUpperCase() : undefined,
-              style: isConditional
-                ? {
-                    stroke: edge.branch === 'true' ? '#10b981' : '#ef4444',
-                    strokeWidth: 2,
-                  }
-                : {},
-              labelStyle: isConditional
-                ? {
-                    fill: edge.branch === 'true' ? '#10b981' : '#ef4444',
-                    fontWeight: 600,
-                    fontSize: 12,
-                  }
-                : {},
-              markerEnd: {
-                type: MarkerType.ArrowClosed,
-                color: isConditional
-                  ? edge.branch === 'true'
-                    ? '#10b981'
-                    : '#ef4444'
-                  : undefined,
-              },
-              data: { branch: edge.branch },
-            };
-          }),
-        );
+            data: { branch: edge.branch },
+          };
+        });
+
+        const { nodes: layoutedNodes, edges: layoutedEdges } =
+          getLayoutedElements(loadedNodes, loadedEdges);
+
+        setNodes(layoutedNodes);
+        setEdges(layoutedEdges);
         setCurrentFlowId(null);
         setHasUnsavedChanges(true);
+        setTimeout(() => fitView({ duration: 200 }), 0);
       } catch (err) {
         alert('Failed to import flow: Invalid JSON');
       }
     };
     input.click();
-  }, [setNodes, setEdges, setCurrentFlowId, setHasUnsavedChanges]);
+  }, [setNodes, setEdges, setCurrentFlowId, setHasUnsavedChanges, fitView]);
 
   const handleValidate = useCallback(() => {
     const errors = validateFlow(nodes, edges);
