@@ -6,6 +6,7 @@
 - Implement shared folder to avoid redundancy (#21)
 - Include unit tests for all api/ steps (#22)
 - Implement a persistence layer to store flows (#23)
+- Implement opts dropdown, flow validation, dark mode and import/export JSON (#25)
 
 # 0.0.5
 - Include delay, transform and webhook steps (#14)
