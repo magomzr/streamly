@@ -1,6 +1,6 @@
 # @streamly/shared
 
-Shared types, schemas, and metadata for Streamly monorepo.
+Shared types, schemas, and metadata for Streamly.
 
 ## What's included
 

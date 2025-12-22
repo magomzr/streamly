@@ -1,4 +1,4 @@
-# Streamly Monorepo Structure
+# Streamly Structure
 
 This document describes the monorepo organization.
 

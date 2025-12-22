@@ -1,136 +1,82 @@
 # TODO
 
-## Persistence
+## High Priority
 
-- [x] Add database support (PostgreSQL/MongoDB)
-- [x] Implement flow CRUD operations
-- [x] Store execution history
-- [ ] Add flow versioning
-- [ ] Implement flow templates
-
-## New Steps
-
-### Control Flow
+### Critical Steps (Control Flow)
 
 - [ ] Conditional step (if/else branching)
 - [ ] Loop step (for_each iteration)
-- [ ] Switch/case step
 - [ ] Parallel execution step
 
-### Data Operations
+### UI/UX
 
-- [ ] Set variable step
-- [ ] Merge objects step
-- [ ] Split string step
-- [ ] Math operations step
-
-### Database
-
-- [ ] SQL query step
-- [ ] MongoDB query step
-- [ ] Redis operations step
-
-### Communication
-
-- [ ] Send email step
-- [ ] Slack notification step
-- [ ] Discord webhook step
-
-### File Operations
-
-- [ ] Read file step
-- [ ] Write file step
-- [ ] CSV parser step
-- [ ] Excel operations step
-
-## UI/UX Improvements
-
-- [x] Save/load flows from UI
-- [x] Delete flows from UI
-- [x] Visual node connections with arrows
-- [x] Horizontal flow layout (left-to-right)
-- [x] Auto-layout with dagre
-- [x] Inline flow name editing
-- [x] Delete nodes with confirmation
-- [x] Topological sort for execution order
-- [x] Step output display in config panel
-- [x] Unique step IDs with auto-increment
-- [x] Execution duration display
-- [x] Unsaved changes indicator
-- [x] Auto-save before execution
-- [x] Minimap for large flows
-- [x] Visual flow validation before execution
-- [x] Export/import flows as JSON
-- [x] Dark mode support
-- [ ] Real-time execution progress indicators
+- [ ] Real-time execution progress indicators (SSE/WebSocket)
 - [ ] Undo/redo functionality
-- [ ] Flow search and filtering
-- [ ] Keyboard shortcuts
+- [ ] Keyboard shortcuts (Ctrl+S, Delete, Ctrl+Z)
+- [ ] Copy/paste nodes
+- [ ] Duplicate flow
 
-## Production Readiness
+### Core Features
 
-- [ ] Authentication and authorization
-- [ ] Multi-user support with permissions
-- [ ] Rate limiting
-- [ ] Structured logging (Winston/Pino)
-- [ ] Metrics and monitoring (Prometheus)
-- [ ] Docker compose setup
-- [ ] Environment variables per flow
-- [ ] API documentation (Swagger)
+- [ ] Flow versioning and history
+- [ ] Secrets management (env variables, encrypted storage)
+- [ ] Flow execution timeout and cancellation
+- [ ] Error handling strategies (retry, fallback, skip)
+
+## Medium Priority
+
+### New Steps
+
+- [ ] Send email step (SMTP/SendGrid)
+- [ ] SQL query step (PostgreSQL/MySQL)
+- [ ] Slack notification step
+- [ ] Math operations step
+- [ ] Merge/split objects step
+- [ ] CSV parser step
+
+### Production Readiness
+
+- [ ] Docker compose setup (API + Web + DB)
 - [ ] Health check endpoints
-- [ ] Graceful shutdown handling
+- [ ] Structured logging (Pino)
+- [ ] API documentation (Swagger)
+- [ ] Authentication (JWT)
 
-## Testing
+### Testing
 
-- [x] Unit tests for all steps
-- [x] Unit tests for engine components
-- [x] Unit tests for utilities
 - [ ] E2E tests for Web UI (Playwright)
-- [ ] Integration tests (API + Web)
-- [ ] Performance tests for large flows
-- [ ] Load testing
-- [ ] Increase unit test coverage to 90%+
+- [ ] Integration tests (API + DB)
+- [ ] Increase test coverage to 90%+
 
-## Developer Experience
+## Low Priority
 
-- [x] Monorepo with pnpm workspaces
-- [x] Shared types and schemas package
-- [x] Step metadata system (labels, categories, schemas)
-- [ ] Hot reload for steps during development
-- [ ] Playground for testing individual steps
-- [ ] Step development CLI tool
+### Advanced Features
+
 - [ ] Flow templates library
-- [ ] Community step marketplace
-- [ ] Step documentation generator
-- [ ] Debug mode with breakpoints
+- [ ] Multi-user support with permissions
+- [ ] Metrics and monitoring (Prometheus)
+- [ ] Step result caching
+- [ ] Flow execution queue
 
-## Documentation
+### Developer Experience
 
-- [x] README with getting started guide
-- [x] Adding new steps guide
+- [ ] Hot reload for steps
+- [ ] Debug mode with step breakpoints
+- [ ] Step development CLI tool
+
+### Documentation
+
 - [ ] Architecture decision records (ADRs)
-- [ ] API reference documentation
-- [ ] Step development guide
 - [ ] Deployment guide
-- [ ] Troubleshooting guide
 - [ ] Video tutorials
 - [ ] Example flows repository
 
-## Performance
+## Ideas / Future
 
-- [ ] Implement step result caching
-- [ ] Optimize template resolution
-- [ ] Add flow execution timeout
-- [ ] Implement step execution pooling
-- [ ] Add flow execution queue
-- [ ] Optimize large array operations
-
-## Security
-
-- [ ] Input validation for all steps
-- [ ] Secrets management integration
-- [ ] Audit logging
-- [ ] CORS configuration
-- [ ] Rate limiting per user
-- [ ] SQL injection prevention
-- [ ] XSS protection
+- [ ] Visual flow diff for versioning
+- [ ] Flow marketplace/sharing
+- [ ] AI-powered step suggestions
+- [ ] Flow analytics dashboard
+- [ ] Mobile app for monitoring
+- [ ] Scheduled flow execution (cron)
+- [ ] Flow triggers (webhooks, events)
