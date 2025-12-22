@@ -23,7 +23,7 @@ import { Sidebar } from './Sidebar.js';
 import { ExecutionView } from './ExecutionView.js';
 import { VarsEditor } from './VarsEditor.js';
 import type { StepData, StepType } from '../types.js';
-import { STEP_LABELS, type IFlow } from '@streamly/shared';
+import { STEP_LABELS, STEP_SCHEMAS, type IFlow } from '@streamly/shared';
 import { apiService } from '../services/api.js';
 import { useExecutionStore } from '../stores/execution.js';
 import { useFlowStore } from '../stores/flow.js';
@@ -77,6 +77,8 @@ function FlowBuilderInner() {
   const [isSaving, setIsSaving] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [showValidation, setShowValidation] = useState(false);
   const { isExecuting, setExecuting, setResult, setError } =
     useExecutionStore();
   const {
@@ -433,6 +435,94 @@ function FlowBuilderInner() {
     input.click();
   }, [setNodes, setEdges, setCurrentFlowId, setHasUnsavedChanges]);
 
+  const validateFlow = useCallback(() => {
+    const errors: string[] = [];
+
+    // Check if flow is empty
+    if (nodes.length === 0) {
+      errors.push('Flow is empty. Add at least one step.');
+      return errors;
+    }
+
+    // Check for disconnected nodes (if there are edges)
+    if (edges.length > 0) {
+      const connectedNodes = new Set<string>();
+      edges.forEach((edge) => {
+        connectedNodes.add(edge.source);
+        connectedNodes.add(edge.target);
+      });
+      nodes.forEach((node) => {
+        if (!connectedNodes.has(node.id)) {
+          errors.push(`Step "${node.data.label}" is not connected`);
+        }
+      });
+    }
+
+    // Check for cycles
+    const hasCycle = () => {
+      const visited = new Set<string>();
+      const recStack = new Set<string>();
+      const graph = new Map<string, string[]>();
+
+      nodes.forEach((node) => graph.set(node.id, []));
+      edges.forEach((edge) => {
+        graph.get(edge.source)?.push(edge.target);
+      });
+
+      const dfs = (nodeId: string): boolean => {
+        visited.add(nodeId);
+        recStack.add(nodeId);
+
+        for (const neighbor of graph.get(nodeId) || []) {
+          if (!visited.has(neighbor)) {
+            if (dfs(neighbor)) return true;
+          } else if (recStack.has(neighbor)) {
+            return true;
+          }
+        }
+
+        recStack.delete(nodeId);
+        return false;
+      };
+
+      for (const nodeId of graph.keys()) {
+        if (!visited.has(nodeId)) {
+          if (dfs(nodeId)) return true;
+        }
+      }
+      return false;
+    };
+
+    if (hasCycle()) {
+      errors.push('Flow contains a cycle (infinite loop detected)');
+    }
+
+    // Check for required fields
+    nodes.forEach((node) => {
+      const schema = STEP_SCHEMAS[node.data.stepType];
+      if (!schema) return;
+
+      schema.forEach((field) => {
+        if (field.required) {
+          const value = node.data.settings?.[field.name];
+          if (value === undefined || value === null || value === '') {
+            errors.push(
+              `Step "${node.data.label}": Required field "${field.label}" is empty`,
+            );
+          }
+        }
+      });
+    });
+
+    return errors;
+  }, [nodes, edges]);
+
+  const handleValidate = useCallback(() => {
+    const errors = validateFlow();
+    setValidationErrors(errors);
+    setShowValidation(true);
+  }, [validateFlow]);
+
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
       <Sidebar onLoadFlow={handleLoadFlow} onNewFlow={handleNewFlow} />
@@ -611,6 +701,30 @@ function FlowBuilderInner() {
                 </button>
                 <button
                   onClick={() => {
+                    handleValidate();
+                    setShowOptionsMenu(false);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '10px 16px',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    color: '#374151',
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = '#f3f4f6')
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = 'transparent')
+                  }
+                >
+                  ✓ Validate Flow
+                </button>
+                <button
+                  onClick={() => {
                     handleExportJSON();
                     setShowOptionsMenu(false);
                   }}
@@ -728,6 +842,144 @@ function FlowBuilderInner() {
 
       {showExecution && (
         <ExecutionView onClose={() => setShowExecution(false)} />
+      )}
+
+      {showValidation && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => setShowValidation(false)}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              padding: '24px',
+              maxWidth: '500px',
+              width: '90%',
+              maxHeight: '80vh',
+              overflowY: 'auto',
+              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '16px',
+              }}
+            >
+              <h3
+                style={{
+                  margin: 0,
+                  fontSize: '18px',
+                  fontWeight: 600,
+                  color: '#111827',
+                }}
+              >
+                Flow Validation
+              </h3>
+              <button
+                onClick={() => setShowValidation(false)}
+                style={{
+                  border: 'none',
+                  background: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#6b7280',
+                  padding: 0,
+                  lineHeight: 1,
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {validationErrors.length === 0 ? (
+              <div
+                style={{
+                  padding: '16px',
+                  backgroundColor: '#d1fae5',
+                  border: '1px solid #a7f3d0',
+                  borderRadius: '6px',
+                  color: '#065f46',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}
+              >
+                <span style={{ fontSize: '20px' }}>✓</span>
+                <span style={{ fontWeight: 500 }}>Flow is valid!</span>
+              </div>
+            ) : (
+              <div>
+                <div
+                  style={{
+                    padding: '12px',
+                    backgroundColor: '#fee2e2',
+                    border: '1px solid #fecaca',
+                    borderRadius: '6px',
+                    marginBottom: '16px',
+                  }}
+                >
+                  <div
+                    style={{
+                      fontWeight: 600,
+                      color: '#991b1b',
+                      marginBottom: '8px',
+                    }}
+                  >
+                    Found {validationErrors.length} issue
+                    {validationErrors.length > 1 ? 's' : ''}:
+                  </div>
+                  <ul
+                    style={{
+                      margin: 0,
+                      paddingLeft: '20px',
+                      color: '#991b1b',
+                    }}
+                  >
+                    {validationErrors.map((error, i) => (
+                      <li key={i} style={{ marginBottom: '4px' }}>
+                        {error}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={() => setShowValidation(false)}
+              style={{
+                width: '100%',
+                padding: '10px',
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                marginTop: '16px',
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
