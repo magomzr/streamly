@@ -5,6 +5,7 @@
 - Make Streamly a monorepo to support UI (#20)
 - Implement shared folder to avoid redundancy (#21)
 - Include unit tests for all api/ steps (#22)
+- Implement a persistence layer to store flows (#23)
 
 # 0.0.5
 - Include delay, transform and webhook steps (#14)
