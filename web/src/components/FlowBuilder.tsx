@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import {
   ReactFlow,
   MiniMap,
@@ -27,6 +27,7 @@ import { STEP_LABELS, STEP_SCHEMAS, type IFlow } from '@streamly/shared';
 import { apiService } from '../services/api.js';
 import { useExecutionStore } from '../stores/execution.js';
 import { useFlowStore } from '../stores/flow.js';
+import { useThemeStore } from '../stores/theme.js';
 import { generateUUID } from '../utils.js';
 
 const nodeTypes = {
@@ -90,6 +91,11 @@ function FlowBuilderInner() {
     setHasUnsavedChanges,
     hasUnsavedChanges,
   } = useFlowStore();
+  const { isDark, toggleTheme } = useThemeStore();
+
+  useEffect(() => {
+    document.body.style.backgroundColor = isDark ? '#111827' : '#ffffff';
+  }, [isDark]);
 
   const handleDeleteNode = useCallback(
     (nodeId: string) => {
@@ -525,7 +531,11 @@ function FlowBuilderInner() {
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
-      <Sidebar onLoadFlow={handleLoadFlow} onNewFlow={handleNewFlow} />
+      <Sidebar
+        onLoadFlow={handleLoadFlow}
+        onNewFlow={handleNewFlow}
+        isDark={isDark}
+      />
 
       <div
         style={{
@@ -558,6 +568,7 @@ function FlowBuilderInner() {
         selectedNode={selectedNode}
         onClose={() => setSelectedNode(null)}
         onUpdate={handleNodeUpdate}
+        isDark={isDark}
       />
 
       <div
@@ -566,10 +577,12 @@ function FlowBuilderInner() {
           bottom: '20px',
           left: '50%',
           transform: 'translateX(-50%)',
-          backgroundColor: 'white',
+          backgroundColor: isDark ? '#1f2937' : 'white',
           padding: '12px 20px',
           borderRadius: '8px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+          boxShadow: isDark
+            ? '0 2px 8px rgba(0,0,0,0.5)'
+            : '0 2px 8px rgba(0,0,0,0.15)',
           display: 'flex',
           gap: '12px',
           alignItems: 'center',
@@ -579,7 +592,7 @@ function FlowBuilderInner() {
         <div
           style={{
             fontSize: '14px',
-            color: '#6b7280',
+            color: isDark ? '#d1d5db' : '#6b7280',
             marginRight: '8px',
             display: 'flex',
             alignItems: 'center',
@@ -722,6 +735,30 @@ function FlowBuilderInner() {
                   }
                 >
                   ✓ Validate Flow
+                </button>
+                <button
+                  onClick={() => {
+                    toggleTheme();
+                    setShowOptionsMenu(false);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '10px 16px',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    color: '#374151',
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = '#f3f4f6')
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = 'transparent')
+                  }
+                >
+                  {isDark ? '☀️' : '☽️'} {isDark ? 'Light' : 'Dark'} Mode
                 </button>
                 <button
                   onClick={() => {

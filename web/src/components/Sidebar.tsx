@@ -5,9 +5,10 @@ import { useFlowStore } from '../stores/flow';
 interface SidebarProps {
   onLoadFlow: (flowId: string) => void;
   onNewFlow: () => void;
+  isDark: boolean;
 }
 
-export function Sidebar({ onLoadFlow, onNewFlow }: SidebarProps) {
+export function Sidebar({ onLoadFlow, onNewFlow, isDark }: SidebarProps) {
   const { flows, currentFlowId, isLoading, loadFlows, deleteFlow } =
     useFlowStore();
 
@@ -33,7 +34,7 @@ export function Sidebar({ onLoadFlow, onNewFlow }: SidebarProps) {
           margin: '0 0 6px 0',
           fontSize: '11px',
           fontWeight: 600,
-          color: '#6b7280',
+          color: isDark ? '#9ca3af' : '#6b7280',
           textTransform: 'uppercase',
         }}
       >
@@ -47,13 +48,14 @@ export function Sidebar({ onLoadFlow, onNewFlow }: SidebarProps) {
             onDragStart={(e) => onDragStart(e, stepType)}
             style={{
               padding: '8px 10px',
-              backgroundColor: 'white',
-              border: '1px solid #e5e7eb',
+              backgroundColor: isDark ? '#374151' : 'white',
+              border: isDark ? '1px solid #4b5563' : '1px solid #e5e7eb',
               borderRadius: '4px',
               cursor: 'grab',
               fontSize: '12px',
               fontWeight: 500,
               transition: 'all 0.2s',
+              color: isDark ? '#f3f4f6' : '#111827',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.borderColor = '#3b82f6';
@@ -61,7 +63,9 @@ export function Sidebar({ onLoadFlow, onNewFlow }: SidebarProps) {
                 '0 1px 3px rgba(59, 130, 246, 0.2)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = '#e5e7eb';
+              e.currentTarget.style.borderColor = isDark
+                ? '#4b5563'
+                : '#e5e7eb';
               e.currentTarget.style.boxShadow = 'none';
             }}
           >
@@ -80,15 +84,27 @@ export function Sidebar({ onLoadFlow, onNewFlow }: SidebarProps) {
         left: 0,
         width: '260px',
         height: '100%',
-        backgroundColor: '#f9fafb',
-        borderRight: '1px solid #e5e7eb',
+        backgroundColor: isDark ? '#1f2937' : '#f9fafb',
+        borderRight: isDark ? '1px solid #374151' : '1px solid #e5e7eb',
         overflowY: 'auto',
         display: 'flex',
         flexDirection: 'column',
       }}
     >
-      <div style={{ padding: '16px', borderBottom: '1px solid #e5e7eb' }}>
-        <h3 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 600 }}>
+      <div
+        style={{
+          padding: '16px',
+          borderBottom: isDark ? '1px solid #374151' : '1px solid #e5e7eb',
+        }}
+      >
+        <h3
+          style={{
+            margin: '0 0 12px 0',
+            fontSize: '14px',
+            fontWeight: 600,
+            color: isDark ? '#f3f4f6' : '#111827',
+          }}
+        >
           Flows
         </h3>
         <button
@@ -112,7 +128,7 @@ export function Sidebar({ onLoadFlow, onNewFlow }: SidebarProps) {
           <div
             style={{
               textAlign: 'center',
-              color: '#6b7280',
+              color: isDark ? '#9ca3af' : '#6b7280',
               fontSize: '11px',
               padding: '8px',
             }}
@@ -123,7 +139,7 @@ export function Sidebar({ onLoadFlow, onNewFlow }: SidebarProps) {
           <div
             style={{
               textAlign: 'center',
-              color: '#6b7280',
+              color: isDark ? '#9ca3af' : '#6b7280',
               fontSize: '11px',
               padding: '8px',
             }}
@@ -139,14 +155,21 @@ export function Sidebar({ onLoadFlow, onNewFlow }: SidebarProps) {
                 style={{
                   padding: '6px 8px',
                   backgroundColor:
-                    currentFlowId === flow.id ? '#dbeafe' : 'white',
-                  border: `1px solid ${currentFlowId === flow.id ? '#93c5fd' : '#e5e7eb'}`,
+                    currentFlowId === flow.id
+                      ? isDark
+                        ? '#1e3a8a'
+                        : '#dbeafe'
+                      : isDark
+                        ? '#374151'
+                        : 'white',
+                  border: `1px solid ${currentFlowId === flow.id ? (isDark ? '#3b82f6' : '#93c5fd') : isDark ? '#4b5563' : '#e5e7eb'}`,
                   borderRadius: '4px',
                   cursor: 'pointer',
                   fontSize: '11px',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
+                  color: isDark ? '#f3f4f6' : '#111827',
                 }}
               >
                 <span
@@ -179,7 +202,14 @@ export function Sidebar({ onLoadFlow, onNewFlow }: SidebarProps) {
       </div>
 
       <div style={{ padding: '16px', flex: 1 }}>
-        <h3 style={{ margin: '0 0 16px 0', fontSize: '14px', fontWeight: 600 }}>
+        <h3
+          style={{
+            margin: '0 0 16px 0',
+            fontSize: '14px',
+            fontWeight: 600,
+            color: isDark ? '#f3f4f6' : '#111827',
+          }}
+        >
           Steps
         </h3>
 
