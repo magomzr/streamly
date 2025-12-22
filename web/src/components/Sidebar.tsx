@@ -213,6 +213,7 @@ export function Sidebar({ onLoadFlow, onNewFlow, isDark }: SidebarProps) {
           Steps
         </h3>
 
+        {renderCategory('Control Flow', STEP_CATEGORIES.controlFlow)}
         {renderCategory('HTTP', STEP_CATEGORIES.http)}
         {renderCategory('Notifications', STEP_CATEGORIES.notifications)}
         {renderCategory('Data Manipulation', STEP_CATEGORIES.dataManipulation)}

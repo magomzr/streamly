@@ -1,4 +1,5 @@
 export type StepType =
+  | 'conditional'
   | 'http_request'
   | 'send_sms'
   | 'json_minifier'
@@ -21,8 +22,14 @@ export interface IStepDefinition {
   };
 }
 
+export interface IEdge {
+  source: string;
+  target: string;
+  branch?: 'true' | 'false';
+}
+
 export interface IFlow {
   name: string;
   steps: IStepDefinition[];
-  edges?: Array<{ source: string; target: string }>;
+  edges?: IEdge[];
 }

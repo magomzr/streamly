@@ -2,6 +2,7 @@ import { Module, OnModuleInit } from '@nestjs/common';
 import { EngineService } from '../engine/engine.service';
 import { EngineModule } from './engine.module';
 import {
+  ConditionalStep,
   HttpClientStep,
   WebhookStep,
   SendSmsStep,
@@ -18,6 +19,7 @@ import {
 @Module({
   imports: [EngineModule],
   providers: [
+    ConditionalStep,
     HttpClientStep,
     SendSmsStep,
     JsonMinifierStep,
@@ -31,6 +33,7 @@ import {
     Base64DecodeStep,
   ],
   exports: [
+    ConditionalStep,
     HttpClientStep,
     SendSmsStep,
     JsonMinifierStep,
@@ -48,6 +51,7 @@ export class StepsModule implements OnModuleInit {
   constructor(private readonly engineService: EngineService) {}
 
   onModuleInit() {
+    this.engineService.registerStep(ConditionalStep);
     this.engineService.registerStep(HttpClientStep);
     this.engineService.registerStep(SendSmsStep);
     this.engineService.registerStep(JsonMinifierStep);

@@ -1,6 +1,7 @@
 import type { StepType } from '../types/flow.js';
 
 export const STEP_LABELS: Record<StepType, string> = {
+  conditional: 'Conditional',
   http_request: 'HTTP Request',
   send_sms: 'Send SMS',
   json_minifier: 'Minify JSON',

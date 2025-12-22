@@ -102,15 +102,52 @@ function FlowBuilderInner() {
 
   const onConnect: OnConnect = useCallback(
     (params) => {
+      const sourceNode = nodes.find((n) => n.id === params.source);
+      const isConditional = sourceNode?.data.stepType === 'conditional';
+
+      // For conditional nodes, determine branch based on sourceHandle
+      const branch = isConditional ? params.sourceHandle : undefined;
+
+      const edgeStyle = isConditional
+        ? {
+            stroke: branch === 'true' ? '#10b981' : '#ef4444',
+            strokeWidth: 2,
+          }
+        : {};
+
+      const labelStyle = isConditional
+        ? {
+            fill: branch === 'true' ? '#10b981' : '#ef4444',
+            fontWeight: 600,
+            fontSize: 12,
+          }
+        : {};
+
+      const markerColor = isConditional
+        ? branch === 'true'
+          ? '#10b981'
+          : '#ef4444'
+        : undefined;
+
       setEdges((eds) =>
         addEdge(
-          { ...params, markerEnd: { type: MarkerType.ArrowClosed } },
+          {
+            ...params,
+            label: isConditional ? branch?.toUpperCase() : undefined,
+            style: edgeStyle,
+            labelStyle,
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              color: markerColor,
+            },
+            data: { branch },
+          },
           eds,
         ),
       );
       setHasUnsavedChanges(true);
     },
-    [setEdges, setHasUnsavedChanges],
+    [nodes, setEdges, setHasUnsavedChanges],
   );
 
   const onNodeClick = useCallback(
@@ -206,6 +243,7 @@ function FlowBuilderInner() {
       edges: edges.map((edge) => ({
         source: edge.source,
         target: edge.target,
+        branch: edge.data?.branch as 'true' | 'false' | undefined,
       })),
     };
   }, [flowName, nodes, edges]);
@@ -247,12 +285,38 @@ function FlowBuilderInner() {
         })),
       );
       setEdges(
-        (flow.data.edges || []).map((edge, idx) => ({
-          id: `e${idx}`,
-          source: edge.source,
-          target: edge.target,
-          markerEnd: { type: MarkerType.ArrowClosed },
-        })),
+        (flow.data.edges || []).map((edge, idx) => {
+          const isConditional = edge.branch !== undefined;
+          return {
+            id: `e${idx}`,
+            source: edge.source,
+            target: edge.target,
+            sourceHandle: edge.branch || 'default',
+            label: isConditional ? edge.branch?.toUpperCase() : undefined,
+            style: isConditional
+              ? {
+                  stroke: edge.branch === 'true' ? '#10b981' : '#ef4444',
+                  strokeWidth: 2,
+                }
+              : {},
+            labelStyle: isConditional
+              ? {
+                  fill: edge.branch === 'true' ? '#10b981' : '#ef4444',
+                  fontWeight: 600,
+                  fontSize: 12,
+                }
+              : {},
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              color: isConditional
+                ? edge.branch === 'true'
+                  ? '#10b981'
+                  : '#ef4444'
+                : undefined,
+            },
+            data: { branch: edge.branch },
+          };
+        }),
       );
       setCurrentFlowId(flowId);
       setHasUnsavedChanges(false);
@@ -359,12 +423,38 @@ function FlowBuilderInner() {
           })),
         );
         setEdges(
-          (imported.edges || []).map((edge, idx) => ({
-            id: `e${idx}`,
-            source: edge.source,
-            target: edge.target,
-            markerEnd: { type: MarkerType.ArrowClosed },
-          })),
+          (imported.edges || []).map((edge, idx) => {
+            const isConditional = edge.branch !== undefined;
+            return {
+              id: `e${idx}`,
+              source: edge.source,
+              target: edge.target,
+              sourceHandle: edge.branch || 'default',
+              label: isConditional ? edge.branch?.toUpperCase() : undefined,
+              style: isConditional
+                ? {
+                    stroke: edge.branch === 'true' ? '#10b981' : '#ef4444',
+                    strokeWidth: 2,
+                  }
+                : {},
+              labelStyle: isConditional
+                ? {
+                    fill: edge.branch === 'true' ? '#10b981' : '#ef4444',
+                    fontWeight: 600,
+                    fontSize: 12,
+                  }
+                : {},
+              markerEnd: {
+                type: MarkerType.ArrowClosed,
+                color: isConditional
+                  ? edge.branch === 'true'
+                    ? '#10b981'
+                    : '#ef4444'
+                  : undefined,
+              },
+              data: { branch: edge.branch },
+            };
+          }),
         );
         setCurrentFlowId(null);
         setHasUnsavedChanges(true);

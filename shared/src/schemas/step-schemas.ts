@@ -11,6 +11,16 @@ export interface FieldSchema {
 }
 
 export const STEP_SCHEMAS: Record<StepType, FieldSchema[]> = {
+  conditional: [
+    {
+      name: 'condition',
+      label: 'Condition',
+      type: 'text',
+      placeholder: '{{steps.fetchUser.status}} === "active"',
+      required: true,
+    },
+  ],
+
   http_request: [
     {
       name: 'url',
