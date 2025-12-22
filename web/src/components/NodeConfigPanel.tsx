@@ -2,6 +2,7 @@ import { type Node } from '@xyflow/react';
 import type { StepData } from '../types.js';
 import { STEP_SCHEMAS, type FieldSchema } from '@streamly/shared';
 import { useState, useEffect } from 'react';
+import { useExecutionStore } from '../stores/execution.js';
 
 interface NodeConfigPanelProps {
   selectedNode: Node<StepData> | null;
@@ -15,6 +16,7 @@ export function NodeConfigPanel({
   onUpdate,
 }: NodeConfigPanelProps) {
   const [settings, setSettings] = useState<Record<string, any>>({});
+  const { result } = useExecutionStore();
 
   useEffect(() => {
     if (selectedNode?.data.settings) {
@@ -27,6 +29,7 @@ export function NodeConfigPanel({
   if (!selectedNode) return null;
 
   const schema = STEP_SCHEMAS[selectedNode.data.stepType] || [];
+  const stepOutput = result?.steps?.[selectedNode.data.stepId];
 
   const handleLabelChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onUpdate(selectedNode.id, { label: e.target.value });
@@ -208,7 +211,7 @@ export function NodeConfigPanel({
             color: '#374151',
           }}
         >
-          Label
+          Label (Display Name)
         </label>
         <input
           type="text"
@@ -222,6 +225,33 @@ export function NodeConfigPanel({
             fontSize: '14px',
           }}
         />
+      </div>
+
+      <div style={{ marginBottom: '20px' }}>
+        <label
+          style={{
+            display: 'block',
+            fontSize: '12px',
+            fontWeight: 500,
+            marginBottom: '8px',
+            color: '#374151',
+          }}
+        >
+          Step ID (for templates)
+        </label>
+        <div
+          style={{
+            padding: '8px 12px',
+            backgroundColor: '#f0fdf4',
+            border: '1px solid #86efac',
+            borderRadius: '6px',
+            fontSize: '13px',
+            fontFamily: 'monospace',
+            color: '#166534',
+          }}
+        >
+          {selectedNode.data.stepId}
+        </div>
       </div>
 
       <div style={{ marginBottom: '20px' }}>
@@ -278,6 +308,64 @@ export function NodeConfigPanel({
       <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '20px' }}>
         <strong>Node ID:</strong> {selectedNode.id}
       </div>
+
+      {stepOutput && (
+        <div
+          style={{
+            marginTop: '20px',
+            borderTop: '1px solid #e5e7eb',
+            paddingTop: '20px',
+          }}
+        >
+          <h4
+            style={{
+              margin: '0 0 12px 0',
+              fontSize: '14px',
+              fontWeight: 600,
+              color: '#374151',
+            }}
+          >
+            Last Execution Output
+          </h4>
+          <div
+            style={{
+              backgroundColor: '#f9fafb',
+              border: '1px solid #e5e7eb',
+              borderRadius: '6px',
+              padding: '12px',
+              maxHeight: '300px',
+              overflowY: 'auto',
+            }}
+          >
+            <pre
+              style={{
+                margin: 0,
+                fontSize: '11px',
+                fontFamily: 'monospace',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-all',
+                color: '#374151',
+              }}
+            >
+              {JSON.stringify(stepOutput, null, 2)}
+            </pre>
+          </div>
+          <div style={{ marginTop: '8px', fontSize: '11px', color: '#6b7280' }}>
+            Use{' '}
+            <code
+              style={{
+                backgroundColor: '#f3f4f6',
+                padding: '2px 4px',
+                borderRadius: '3px',
+                fontFamily: 'monospace',
+              }}
+            >
+              {'{{steps.' + selectedNode.data.stepId + '.fieldName}}'}
+            </code>{' '}
+            to reference this data
+          </div>
+        </div>
+      )}
     </div>
   );
 }

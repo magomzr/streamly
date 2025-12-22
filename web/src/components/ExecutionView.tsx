@@ -4,6 +4,13 @@ interface ExecutionViewProps {
   onClose: () => void;
 }
 
+function formatDuration(ms: number): string {
+  if (ms < 1000) return `${ms}ms`;
+  if (ms < 60000) return `${(ms / 1000).toFixed(2)}s`;
+  if (ms < 3600000) return `${(ms / 60000).toFixed(2)}min`;
+  return `${(ms / 3600000).toFixed(2)}h`;
+}
+
 export function ExecutionView({ onClose }: ExecutionViewProps) {
   const { result, error, isExecuting } = useExecutionStore();
 
@@ -183,6 +190,12 @@ export function ExecutionView({ onClose }: ExecutionViewProps) {
                   {' | '}
                   <strong>Completed:</strong>{' '}
                   {new Date(result.completedAt).toLocaleString()}
+                  {' | '}
+                  <strong>Duration:</strong>{' '}
+                  {formatDuration(
+                    new Date(result.completedAt).getTime() -
+                      new Date(result.startedAt).getTime(),
+                  )}
                 </>
               )}
             </div>

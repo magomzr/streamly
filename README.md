@@ -50,6 +50,7 @@ pnpm build
 The workflow automation engine. See [api/README.md](./api/README.md) for detailed documentation.
 
 **Quick start:**
+
 ```bash
 cd api
 pnpm dev
@@ -62,6 +63,7 @@ API runs on `http://localhost:3000`
 Visual flow builder UI with React and ReactFlow.
 
 **Quick start:**
+
 ```bash
 cd web
 pnpm dev
@@ -80,6 +82,7 @@ To add a new step that works in both API and Web:
 ### 1. Update Shared Package (`/shared`)
 
 **Add step type** in `shared/src/types/flow.ts`:
+
 ```typescript
 export type StepType =
   | 'http_request'
@@ -88,6 +91,7 @@ export type StepType =
 ```
 
 **Add schema** in `shared/src/schemas/step-schemas.ts`:
+
 ```typescript
 export const STEP_SCHEMAS: Record<StepType, FieldSchema[]> = {
   your_new_step: [
@@ -99,6 +103,7 @@ export const STEP_SCHEMAS: Record<StepType, FieldSchema[]> = {
 ```
 
 **Add label** in `shared/src/metadata/step-labels.ts`:
+
 ```typescript
 export const STEP_LABELS: Record<StepType, string> = {
   your_new_step: 'Your New Step',
@@ -107,6 +112,7 @@ export const STEP_LABELS: Record<StepType, string> = {
 ```
 
 **Add to category** in `shared/src/metadata/step-categories.ts`:
+
 ```typescript
 export const STEP_CATEGORIES = {
   utilities: ['delay', 'your_new_step'] as const,
@@ -117,6 +123,7 @@ export const STEP_CATEGORIES = {
 ### 2. Implement in API (`/api`)
 
 **Create step service** in `api/src/steps/{category}/your-new-step/`:
+
 ```typescript
 import { Injectable } from '@nestjs/common';
 import { IContext, IStepExecutor } from '../../../types';
@@ -128,10 +135,8 @@ export class YourNewStep implements IStepExecutor {
 
   async run(ctx: IContext, settings: any): Promise<any> {
     const { fieldName } = settings;
-    
-    ctx.logs.push(
-      createStepLog('INFO', YourNewStep.name, 'Executing step'),
-    );
+
+    ctx.logs.push(createStepLog('INFO', YourNewStep.name, 'Executing step'));
 
     // Your implementation here
     return { result: 'success' };
@@ -140,6 +145,7 @@ export class YourNewStep implements IStepExecutor {
 ```
 
 **Register in module** `api/src/modules/steps.module.ts`:
+
 ```typescript
 import { YourNewStep } from '../steps/{category}/your-new-step/your-new-step.service';
 
@@ -156,6 +162,7 @@ export class StepsModule implements OnModuleInit {
 ```
 
 **Export from category index** `api/src/steps/{category}/index.ts`:
+
 ```typescript
 export { YourNewStep } from './your-new-step/your-new-step.service';
 ```
@@ -163,6 +170,7 @@ export { YourNewStep } from './your-new-step/your-new-step.service';
 ### 3. That's it!
 
 The Web UI will automatically:
+
 - Show the step in the sidebar
 - Display the correct label and category
 - Generate the configuration form from the schema
@@ -199,6 +207,7 @@ pnpm dev
 - [Shared Package](./shared/README.md)
 - [Web Documentation](./web/README.md)
 - [Architecture](./documentation/)
+- [Roadmap and TODO](./documentation/TODO.md)
 
 ## License
 
