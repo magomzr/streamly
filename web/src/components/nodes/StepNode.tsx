@@ -8,6 +8,7 @@ interface StepNodeProps extends NodeProps {
 
 export const StepNode = memo(({ data, selected, id }: StepNodeProps) => {
   const getNodeColor = (stepType: string) => {
+    if (stepType === 'conditional') return '#ec4899';
     if (stepType.includes('http') || stepType === 'webhook') return '#3b82f6';
     if (stepType.includes('sms')) return '#10b981';
     if (
@@ -96,7 +97,24 @@ export const StepNode = memo(({ data, selected, id }: StepNodeProps) => {
         ×
       </button>
 
-      <Handle type="source" position={Position.Right} />
+      {data.stepType === 'conditional' ? (
+        <>
+          <Handle
+            type="source"
+            position={Position.Right}
+            id="true"
+            style={{ top: '35%', background: '#10b981' }}
+          />
+          <Handle
+            type="source"
+            position={Position.Right}
+            id="false"
+            style={{ top: '65%', background: '#ef4444' }}
+          />
+        </>
+      ) : (
+        <Handle type="source" position={Position.Right} id="default" />
+      )}
     </div>
   );
 });

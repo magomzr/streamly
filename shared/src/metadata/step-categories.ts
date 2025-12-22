@@ -1,6 +1,7 @@
 import type { StepType } from '../types/flow.js';
 
 export const STEP_CATEGORIES = {
+  controlFlow: ['conditional'] as const,
   http: ['http_request', 'webhook'] as const,
   notifications: ['send_sms'] as const,
   dataManipulation: [
