@@ -76,6 +76,7 @@ function FlowBuilderInner() {
   const [showVarsEditor, setShowVarsEditor] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
+  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const { isExecuting, setExecuting, setResult, setError } =
     useExecutionStore();
   const {
@@ -377,6 +378,61 @@ function FlowBuilderInner() {
     setError,
   ]);
 
+  const handleExportJSON = useCallback(() => {
+    const flow = buildFlow();
+    const dataStr = JSON.stringify(flow, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${flowName.replace(/\s+/g, '_')}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }, [buildFlow, flowName]);
+
+  const handleImportJSON = useCallback(() => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const imported: IFlow = JSON.parse(text);
+
+        setFlowName(imported.name);
+        setNodes(
+          imported.steps.map((step, idx) => ({
+            id: step.id,
+            type: 'step' as const,
+            position: { x: 100 + idx * 200, y: 100 },
+            data: {
+              label: step.name || 'Unnamed',
+              stepId: step.name || 'unnamed',
+              stepType: step.type,
+              settings: step.settings || {},
+            },
+          })),
+        );
+        setEdges(
+          (imported.edges || []).map((edge, idx) => ({
+            id: `e${idx}`,
+            source: edge.source,
+            target: edge.target,
+            markerEnd: { type: MarkerType.ArrowClosed },
+          })),
+        );
+        setCurrentFlowId(null);
+        setHasUnsavedChanges(true);
+      } catch (err) {
+        alert('Failed to import flow: Invalid JSON');
+      }
+    };
+    input.click();
+  }, [setNodes, setEdges, setCurrentFlowId, setHasUnsavedChanges]);
+
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
       <Sidebar onLoadFlow={handleLoadFlow} onNewFlow={handleNewFlow} />
@@ -485,21 +541,127 @@ function FlowBuilderInner() {
           {hasUnsavedChanges && <span style={{ color: '#f59e0b' }}>•</span>}
         </div>
 
-        <button
-          onClick={handleAutoLayout}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: 'white',
-            color: '#6b7280',
-            border: '1px solid #e5e7eb',
-            borderRadius: '6px',
-            fontSize: '14px',
-            fontWeight: 500,
-            cursor: 'pointer',
-          }}
-        >
-          Auto Layout
-        </button>
+        <div style={{ position: 'relative' }}>
+          <button
+            onClick={() => setShowOptionsMenu(!showOptionsMenu)}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: 'white',
+              color: '#6b7280',
+              border: '1px solid #e5e7eb',
+              borderRadius: '6px',
+              fontSize: '14px',
+              fontWeight: 500,
+              cursor: 'pointer',
+            }}
+          >
+            Options ▾
+          </button>
+
+          {showOptionsMenu && (
+            <>
+              <div
+                style={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  zIndex: 999,
+                }}
+                onClick={() => setShowOptionsMenu(false)}
+              />
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '100%',
+                  left: 0,
+                  marginBottom: '8px',
+                  backgroundColor: 'white',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '6px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  minWidth: '160px',
+                  zIndex: 1000,
+                }}
+              >
+                <button
+                  onClick={() => {
+                    handleAutoLayout();
+                    setShowOptionsMenu(false);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '10px 16px',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    color: '#374151',
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = '#f3f4f6')
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = 'transparent')
+                  }
+                >
+                  Auto Layout
+                </button>
+                <button
+                  onClick={() => {
+                    handleExportJSON();
+                    setShowOptionsMenu(false);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '10px 16px',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    color: '#374151',
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = '#f3f4f6')
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = 'transparent')
+                  }
+                >
+                  ↓ Export JSON
+                </button>
+                <button
+                  onClick={() => {
+                    handleImportJSON();
+                    setShowOptionsMenu(false);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '10px 16px',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    color: '#374151',
+                    borderRadius: '0 0 6px 6px',
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = '#f3f4f6')
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = 'transparent')
+                  }
+                >
+                  ↑ Import JSON
+                </button>
+              </div>
+            </>
+          )}
+        </div>
 
         <button
           onClick={handleSave}
