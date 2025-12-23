@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { type StepType } from '@streamly/shared';
 import { useFlowStore } from '../stores/flow';
 import { CategoryAccordion } from './CategoryAccordion';
+import { Spinner } from './Spinner';
 import { STEP_CATEGORIES } from '@streamly/shared';
 
 interface SidebarProps {
@@ -78,16 +79,7 @@ export function Sidebar({ onLoadFlow, onNewFlow, isDark }: SidebarProps) {
           + New Flow
         </button>
         {isLoading ? (
-          <div
-            style={{
-              textAlign: 'center',
-              color: isDark ? '#9ca3af' : '#6b7280',
-              fontSize: '11px',
-              padding: '8px',
-            }}
-          >
-            Loading...
-          </div>
+          <Spinner isDark={isDark} size={20} />
         ) : flows.length === 0 ? (
           <div
             style={{
