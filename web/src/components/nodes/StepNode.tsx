@@ -10,6 +10,8 @@ export const StepNode = memo(({ data, selected, id }: StepNodeProps) => {
   const getNodeColor = (stepType: string) => {
     if (stepType === 'conditional') return '#ec4899';
     if (stepType.includes('http') || stepType === 'webhook') return '#3b82f6';
+    if (stepType.includes('html') || stepType.includes('extract'))
+      return '#14b8a6';
     if (stepType.includes('sms')) return '#10b981';
     if (
       stepType.includes('array') ||
