@@ -11,8 +11,6 @@
 
 - [ ] Real-time execution progress indicators (SSE/WebSocket)
 - [ ] Undo/redo functionality
-- [ ] Keyboard shortcuts (Ctrl+S, Delete, Ctrl+Z)
-- [ ] Copy/paste nodes
 - [ ] Duplicate flow
 
 ### Core Features
