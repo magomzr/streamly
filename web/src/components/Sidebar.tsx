@@ -171,6 +171,12 @@ export function Sidebar({ onLoadFlow, onNewFlow, isDark }: SidebarProps) {
           onDragStart={onDragStart}
         />
         <CategoryAccordion
+          title="Web Scraping"
+          steps={STEP_CATEGORIES.webScraping}
+          isDark={isDark}
+          onDragStart={onDragStart}
+        />
+        <CategoryAccordion
           title="Notifications"
           steps={STEP_CATEGORIES.notifications}
           isDark={isDark}

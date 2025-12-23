@@ -14,6 +14,9 @@ import {
   Base64EncodeStep,
   Base64DecodeStep,
   StringFormatStep,
+  HtmlParserStep,
+  ExtractLinksStep,
+  ExtractTextStep,
 } from '../steps';
 
 @Module({
@@ -31,6 +34,9 @@ import {
     StringFormatStep,
     Base64EncodeStep,
     Base64DecodeStep,
+    HtmlParserStep,
+    ExtractLinksStep,
+    ExtractTextStep,
   ],
   exports: [
     ConditionalStep,
@@ -45,6 +51,9 @@ import {
     StringFormatStep,
     Base64EncodeStep,
     Base64DecodeStep,
+    HtmlParserStep,
+    ExtractLinksStep,
+    ExtractTextStep,
   ],
 })
 export class StepsModule implements OnModuleInit {
@@ -63,5 +72,8 @@ export class StepsModule implements OnModuleInit {
     this.engineService.registerStep(StringFormatStep);
     this.engineService.registerStep(Base64EncodeStep);
     this.engineService.registerStep(Base64DecodeStep);
+    this.engineService.registerStep(HtmlParserStep);
+    this.engineService.registerStep(ExtractLinksStep);
+    this.engineService.registerStep(ExtractTextStep);
   }
 }

@@ -10,7 +10,10 @@ export type StepType =
   | 'sort_array'
   | 'string_format'
   | 'base64_encode'
-  | 'base64_decode';
+  | 'base64_decode'
+  | 'html_parser'
+  | 'extract_links'
+  | 'extract_text';
 
 export interface IStepDefinition {
   id: string;

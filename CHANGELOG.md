@@ -5,6 +5,7 @@
 - Use label instead of stepId for naming (#30)
 - Support keyboard shortcuts (save, delete, copy, paste) (#31)
 - Organize sidebar with accordions and spinner for flows (#32)
+- Include web scraping steps (#33)
 
 ## 0.0.6
 

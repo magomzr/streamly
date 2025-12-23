@@ -21,6 +21,55 @@ export const STEP_SCHEMAS: Record<StepType, FieldSchema[]> = {
     },
   ],
 
+  html_parser: [
+    {
+      name: 'html',
+      label: 'HTML Content',
+      type: 'text',
+      placeholder: '{{steps.fetchPage}}',
+      required: true,
+    },
+    {
+      name: 'selector',
+      label: 'CSS Selector',
+      type: 'text',
+      placeholder: '.product-title',
+      required: true,
+    },
+    {
+      name: 'attribute',
+      label: 'Attribute (optional)',
+      type: 'text',
+      placeholder: 'href, src, or leave empty for text',
+    },
+  ],
+
+  extract_links: [
+    {
+      name: 'html',
+      label: 'HTML Content',
+      type: 'text',
+      placeholder: '{{steps.fetchPage}}',
+      required: true,
+    },
+    {
+      name: 'baseUrl',
+      label: 'Base URL (optional)',
+      type: 'text',
+      placeholder: 'https://example.com',
+    },
+  ],
+
+  extract_text: [
+    {
+      name: 'html',
+      label: 'HTML Content',
+      type: 'text',
+      placeholder: '{{steps.fetchPage}}',
+      required: true,
+    },
+  ],
+
   http_request: [
     {
       name: 'url',
