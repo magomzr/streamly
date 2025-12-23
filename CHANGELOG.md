@@ -3,6 +3,7 @@
 - Implement conditional/branching step (#28)
 - Fix layout rendering when loading a flow (#29)
 - Use label instead of stepId for naming (#30)
+- Support keyboard shortcuts (save, delete, copy, paste) (#31)
 
 ## 0.0.6
 

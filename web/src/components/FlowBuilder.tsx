@@ -54,6 +54,7 @@ function FlowBuilderInner() {
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [showValidation, setShowValidation] = useState(false);
+  const [copiedNodes, setCopiedNodes] = useState<Node<StepData>[]>([]);
   const { isExecuting, setExecuting, setResult, setError } =
     useExecutionStore();
   const {
@@ -250,6 +251,16 @@ function FlowBuilderInner() {
   }, [flowName, nodes, edges]);
 
   const handleSave = useCallback(async () => {
+    // Validate flow before saving
+    const errors = validateFlow(nodes, edges);
+    if (errors.length > 0) {
+      const errorList = errors.map((e) => `• ${e}`).join('\n');
+      const confirmed = confirm(
+        `Flow has ${errors.length} validation error${errors.length > 1 ? 's' : ''}:\n\n${errorList}\n\nDo you want to save anyway?`,
+      );
+      if (!confirmed) return;
+    }
+
     setIsSaving(true);
     try {
       const flow = buildFlow();
@@ -264,7 +275,15 @@ function FlowBuilderInner() {
     } finally {
       setIsSaving(false);
     }
-  }, [currentFlowId, buildFlow, createFlow, updateFlow, setCurrentFlowId]);
+  }, [
+    currentFlowId,
+    buildFlow,
+    createFlow,
+    updateFlow,
+    setCurrentFlowId,
+    nodes,
+    edges,
+  ]);
 
   const handleLoadFlow = useCallback(
     async (flowId: string) => {
@@ -484,6 +503,73 @@ function FlowBuilderInner() {
     setValidationErrors(errors);
     setShowValidation(true);
   }, [nodes, edges]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if typing in input
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      )
+        return;
+
+      // Ctrl/Cmd + S: Save
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        handleSave();
+      }
+
+      // Ctrl/Cmd + C: Copy selected nodes
+      if ((e.ctrlKey || e.metaKey) && e.key === 'c' && selectedNode) {
+        e.preventDefault();
+        setCopiedNodes([selectedNode]);
+      }
+
+      // Ctrl/Cmd + V: Paste nodes
+      if ((e.ctrlKey || e.metaKey) && e.key === 'v' && copiedNodes.length > 0) {
+        e.preventDefault();
+        const pastedNodes = copiedNodes.map((node) => {
+          const newId = generateUUID();
+          const existingIds = nodes.map((n) => n.data.stepId);
+          let stepId = node.data.stepId;
+          let counter = 2;
+          while (existingIds.includes(stepId)) {
+            stepId = `${node.data.stepId}_${counter}`;
+            counter++;
+          }
+          return {
+            ...node,
+            id: newId,
+            position: {
+              x: node.position.x + 50,
+              y: node.position.y + 50,
+            },
+            data: { ...node.data, stepId },
+          };
+        });
+        setNodes((nds) => [...nds, ...pastedNodes]);
+        setHasUnsavedChanges(true);
+      }
+
+      // Delete: Delete selected node
+      if (e.key === 'Delete' && selectedNode) {
+        e.preventDefault();
+        handleDeleteNode(selectedNode.id);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [
+    selectedNode,
+    copiedNodes,
+    nodes,
+    handleSave,
+    handleDeleteNode,
+    setNodes,
+    setHasUnsavedChanges,
+  ]);
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
