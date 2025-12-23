@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
-import { STEP_LABELS, STEP_CATEGORIES, type StepType } from '@streamly/shared';
+import { type StepType } from '@streamly/shared';
 import { useFlowStore } from '../stores/flow';
+import { CategoryAccordion } from './CategoryAccordion';
+import { STEP_CATEGORIES } from '@streamly/shared';
 
 interface SidebarProps {
   onLoadFlow: (flowId: string) => void;
@@ -26,55 +28,6 @@ export function Sidebar({ onLoadFlow, onNewFlow, isDark }: SidebarProps) {
     event.dataTransfer.setData('application/reactflow', stepType);
     event.dataTransfer.effectAllowed = 'move';
   };
-
-  const renderCategory = (title: string, steps: readonly StepType[]) => (
-    <div key={title} style={{ marginBottom: '16px' }}>
-      <h4
-        style={{
-          margin: '0 0 6px 0',
-          fontSize: '11px',
-          fontWeight: 600,
-          color: isDark ? '#9ca3af' : '#6b7280',
-          textTransform: 'uppercase',
-        }}
-      >
-        {title}
-      </h4>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-        {steps.map((stepType) => (
-          <div
-            key={stepType}
-            draggable
-            onDragStart={(e) => onDragStart(e, stepType)}
-            style={{
-              padding: '8px 10px',
-              backgroundColor: isDark ? '#374151' : 'white',
-              border: isDark ? '1px solid #4b5563' : '1px solid #e5e7eb',
-              borderRadius: '4px',
-              cursor: 'grab',
-              fontSize: '12px',
-              fontWeight: 500,
-              transition: 'all 0.2s',
-              color: isDark ? '#f3f4f6' : '#111827',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = '#3b82f6';
-              e.currentTarget.style.boxShadow =
-                '0 1px 3px rgba(59, 130, 246, 0.2)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = isDark
-                ? '#4b5563'
-                : '#e5e7eb';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
-          >
-            {STEP_LABELS[stepType]}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
 
   return (
     <div
@@ -213,12 +166,42 @@ export function Sidebar({ onLoadFlow, onNewFlow, isDark }: SidebarProps) {
           Steps
         </h3>
 
-        {renderCategory('Control Flow', STEP_CATEGORIES.controlFlow)}
-        {renderCategory('HTTP', STEP_CATEGORIES.http)}
-        {renderCategory('Notifications', STEP_CATEGORIES.notifications)}
-        {renderCategory('Data Manipulation', STEP_CATEGORIES.dataManipulation)}
-        {renderCategory('Encoding', STEP_CATEGORIES.encoding)}
-        {renderCategory('Utilities', STEP_CATEGORIES.utilities)}
+        <CategoryAccordion
+          title="Control Flow"
+          steps={STEP_CATEGORIES.controlFlow}
+          isDark={isDark}
+          onDragStart={onDragStart}
+        />
+        <CategoryAccordion
+          title="HTTP"
+          steps={STEP_CATEGORIES.http}
+          isDark={isDark}
+          onDragStart={onDragStart}
+        />
+        <CategoryAccordion
+          title="Notifications"
+          steps={STEP_CATEGORIES.notifications}
+          isDark={isDark}
+          onDragStart={onDragStart}
+        />
+        <CategoryAccordion
+          title="Data Manipulation"
+          steps={STEP_CATEGORIES.dataManipulation}
+          isDark={isDark}
+          onDragStart={onDragStart}
+        />
+        <CategoryAccordion
+          title="Encoding"
+          steps={STEP_CATEGORIES.encoding}
+          isDark={isDark}
+          onDragStart={onDragStart}
+        />
+        <CategoryAccordion
+          title="Utilities"
+          steps={STEP_CATEGORIES.utilities}
+          isDark={isDark}
+          onDragStart={onDragStart}
+        />
       </div>
     </div>
   );
