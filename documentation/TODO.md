@@ -70,6 +70,7 @@
 
 ## Ideas / Future
 
+- [x] Scheduled flow execution (cron)
 - [ ] Visual flow diff for versioning
 - [ ] Flow marketplace/sharing
 - [ ] AI-powered step suggestions

@@ -32,8 +32,17 @@ export interface IEdge {
   branch?: 'true' | 'false';
 }
 
+export type TriggerType = 'http' | 'cron';
+
+export interface ITriggerConfig {
+  type: TriggerType;
+  cronExpression?: string;
+  enabled?: boolean;
+}
+
 export interface IFlow {
   name: string;
   steps: IStepDefinition[];
   edges?: IEdge[];
+  trigger?: ITriggerConfig;
 }

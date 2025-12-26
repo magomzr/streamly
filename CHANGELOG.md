@@ -6,6 +6,7 @@
 - Support keyboard shortcuts (save, delete, copy, paste) (#31)
 - Organize sidebar with accordions and spinner for flows (#32)
 - Include web scraping steps (#33)
+- Add scheduled flows and execution history (#34)
 
 ## 0.0.6
 

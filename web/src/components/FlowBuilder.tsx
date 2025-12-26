@@ -19,9 +19,11 @@ import { StepNode } from './nodes/StepNode.js';
 import { NodeConfigPanel } from './NodeConfigPanel.js';
 import { Sidebar } from './Sidebar.js';
 import { ExecutionView } from './ExecutionView.js';
+import { ExecutionHistory } from './ExecutionHistory.js';
 import { VarsEditor } from './VarsEditor.js';
+import { TriggerConfig } from './TriggerConfig.js';
 import type { StepData, StepType } from '../types.js';
-import { STEP_LABELS, type IFlow } from '@streamly/shared';
+import { STEP_LABELS, type IFlow, type ITriggerConfig } from '@streamly/shared';
 import { apiService } from '../services/api.js';
 import { useExecutionStore } from '../stores/execution.js';
 import { useFlowStore } from '../stores/flow.js';
@@ -46,9 +48,15 @@ function FlowBuilderInner() {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [selectedNode, setSelectedNode] = useState<Node<StepData> | null>(null);
   const [flowName, setFlowName] = useState('Untitled Flow');
+  const [trigger, setTrigger] = useState<ITriggerConfig>({
+    type: 'http',
+    enabled: false,
+  });
   const [vars, setVars] = useState<Record<string, any>>({});
   const [showExecution, setShowExecution] = useState(false);
   const [showVarsEditor, setShowVarsEditor] = useState(false);
+  const [showTriggerConfig, setShowTriggerConfig] = useState(false);
+  const [showExecutionHistory, setShowExecutionHistory] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
@@ -247,8 +255,9 @@ function FlowBuilderInner() {
         target: edge.target,
         branch: edge.data?.branch as 'true' | 'false' | undefined,
       })),
+      trigger,
     };
-  }, [flowName, nodes, edges]);
+  }, [flowName, nodes, edges, trigger]);
 
   const handleSave = useCallback(async () => {
     // Validate flow before saving
@@ -291,6 +300,7 @@ function FlowBuilderInner() {
       if (!flow) return;
 
       setFlowName(flow.data.name);
+      setTrigger(flow.data.trigger || { type: 'http', enabled: false });
       const loadedNodes = flow.data.steps.map((step) => ({
         id: step.id,
         type: 'step' as const,
@@ -342,6 +352,8 @@ function FlowBuilderInner() {
       setEdges(layoutedEdges);
       setCurrentFlowId(flowId);
       setHasUnsavedChanges(false);
+      setShowTriggerConfig(false);
+      setShowExecutionHistory(false);
       setTimeout(() => fitView({ duration: 200 }), 0);
     },
     [
@@ -359,6 +371,7 @@ function FlowBuilderInner() {
     setNodes([]);
     setEdges([]);
     setVars({});
+    setTrigger({ type: 'http', enabled: false });
     setCurrentFlowId(null);
     setHasUnsavedChanges(false);
   }, [setNodes, setEdges, setCurrentFlowId, setHasUnsavedChanges]);
@@ -488,6 +501,7 @@ function FlowBuilderInner() {
 
         setNodes(layoutedNodes);
         setEdges(layoutedEdges);
+        setTrigger(imported.trigger || { type: 'http', enabled: false });
         setCurrentFlowId(null);
         setHasUnsavedChanges(true);
         setTimeout(() => fitView({ duration: 200 }), 0);
@@ -612,6 +626,69 @@ function FlowBuilderInner() {
         onUpdate={handleNodeUpdate}
         isDark={isDark}
       />
+
+      <div
+        style={{
+          position: 'absolute',
+          top: '20px',
+          right: '20px',
+          zIndex: 10,
+        }}
+      >
+        {!showTriggerConfig ? (
+          <button
+            onClick={() => setShowTriggerConfig(true)}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: isDark ? '#374151' : 'white',
+              color: isDark ? '#f3f4f6' : '#6b7280',
+              border: `1px solid ${isDark ? '#4b5563' : '#e5e7eb'}`,
+              borderRadius: '6px',
+              fontSize: '13px',
+              fontWeight: 500,
+              cursor: 'pointer',
+              boxShadow: isDark
+                ? '0 2px 8px rgba(0,0,0,0.5)'
+                : '0 2px 8px rgba(0,0,0,0.1)',
+            }}
+          >
+            ⚙️ Trigger
+          </button>
+        ) : (
+          <div style={{ width: '320px' }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                marginBottom: '8px',
+              }}
+            >
+              <button
+                onClick={() => setShowTriggerConfig(false)}
+                style={{
+                  padding: '4px 8px',
+                  backgroundColor: isDark ? '#374151' : 'white',
+                  color: isDark ? '#f3f4f6' : '#6b7280',
+                  border: `1px solid ${isDark ? '#4b5563' : '#e5e7eb'}`,
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            <TriggerConfig
+              trigger={trigger}
+              onChange={(newTrigger) => {
+                setTrigger(newTrigger);
+                setHasUnsavedChanges(true);
+              }}
+              isDark={isDark}
+            />
+          </div>
+        )}
+      </div>
 
       <div
         style={{
@@ -906,6 +983,24 @@ function FlowBuilderInner() {
           Variables{' '}
           {Object.keys(vars).length > 0 && `(${Object.keys(vars).length})`}
         </button>
+
+        {currentFlowId && (
+          <button
+            onClick={() => setShowExecutionHistory(true)}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: 'white',
+              color: '#6b7280',
+              border: '1px solid #e5e7eb',
+              borderRadius: '6px',
+              fontSize: '14px',
+              fontWeight: 500,
+              cursor: 'pointer',
+            }}
+          >
+            📊 History
+          </button>
+        )}
       </div>
 
       {showVarsEditor && (
@@ -921,6 +1016,14 @@ function FlowBuilderInner() {
 
       {showExecution && (
         <ExecutionView onClose={() => setShowExecution(false)} />
+      )}
+
+      {showExecutionHistory && currentFlowId && (
+        <ExecutionHistory
+          flowId={currentFlowId}
+          onClose={() => setShowExecutionHistory(false)}
+          isDark={isDark}
+        />
       )}
 
       {showValidation && (
