@@ -4,7 +4,7 @@ import { createStepLog } from '../../../utils/logger';
 
 @Injectable()
 export class SortArrayStep implements IStepExecutor {
-  static stepType = 'sort_array';
+  static readonly stepType = 'sort_array';
 
   async run(ctx: IContext, settings: any): Promise<any> {
     const { array, field, order = 'asc' } = settings;

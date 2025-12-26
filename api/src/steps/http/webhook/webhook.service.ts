@@ -4,7 +4,7 @@ import { createStepLog } from '../../../utils/logger';
 
 @Injectable()
 export class WebhookStep implements IStepExecutor {
-  static stepType = 'webhook';
+  static readonly stepType = 'webhook';
 
   async run(ctx: IContext, settings: any): Promise<any> {
     const { url, payload = {}, headers = {} } = settings;

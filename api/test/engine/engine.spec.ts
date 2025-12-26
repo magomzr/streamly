@@ -2,7 +2,7 @@ import { Engine } from '../../src/engine/engine';
 import { IStepRegistry, IFlow, IStepExecutor, IContext } from '../../src/types';
 
 class TestStep implements IStepExecutor {
-  static stepType = 'test_step';
+  static readonly stepType = 'test_step';
   async run(ctx: IContext, settings: any): Promise<any> {
     return { data: settings.value };
   }

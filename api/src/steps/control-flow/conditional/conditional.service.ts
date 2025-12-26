@@ -5,7 +5,7 @@ import { resolveTemplates } from '../../../utils/template-resolver';
 
 @Injectable()
 export class ConditionalStep implements IStepExecutor {
-  static stepType = 'conditional';
+  static readonly stepType = 'conditional';
 
   async run(ctx: IContext, settings: any): Promise<any> {
     const { condition } = settings;

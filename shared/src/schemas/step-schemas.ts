@@ -118,6 +118,50 @@ export const STEP_SCHEMAS: Record<StepType, FieldSchema[]> = {
     },
   ],
 
+  send_email: [
+    {
+      name: 'email',
+      label: 'Gmail Address',
+      type: 'text',
+      placeholder: 'your-email@gmail.com',
+      required: true,
+    },
+    {
+      name: 'appPassword',
+      label: 'App Password',
+      type: 'text',
+      placeholder: 'xxxx xxxx xxxx xxxx',
+      required: true,
+    },
+    {
+      name: 'to',
+      label: 'To',
+      type: 'text',
+      placeholder: 'recipient@example.com',
+      required: true,
+    },
+    {
+      name: 'subject',
+      label: 'Subject',
+      type: 'text',
+      placeholder: 'Email subject',
+      required: true,
+    },
+    {
+      name: 'body',
+      label: 'Body',
+      type: 'textarea',
+      placeholder: 'Email content here...',
+      required: true,
+    },
+    {
+      name: 'html',
+      label: 'HTML Format',
+      type: 'boolean',
+      defaultValue: false,
+    },
+  ],
+
   filter_array: [
     {
       name: 'array',
@@ -144,10 +188,23 @@ export const STEP_SCHEMAS: Record<StepType, FieldSchema[]> = {
         { value: '<', label: 'Less Than (<)' },
         { value: '>=', label: 'Greater or Equal (>=)' },
         { value: '<=', label: 'Less or Equal (<=)' },
+        { value: 'contains', label: 'Contains' },
       ],
       defaultValue: '===',
     },
     { name: 'value', label: 'Value', type: 'text', required: true },
+    {
+      name: 'valueType',
+      label: 'Value Type',
+      type: 'select',
+      options: [
+        { value: 'string', label: 'String' },
+        { value: 'number', label: 'Number' },
+        { value: 'boolean', label: 'Boolean' },
+        { value: 'null', label: 'Null' },
+      ],
+      defaultValue: 'string',
+    },
   ],
 
   sort_array: [
