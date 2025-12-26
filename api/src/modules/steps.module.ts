@@ -2,6 +2,7 @@ import { Module, OnModuleInit } from '@nestjs/common';
 import { EngineService } from '../engine/engine.service';
 import { EngineModule } from './engine.module';
 import {
+  ConditionalStep,
   HttpClientStep,
   WebhookStep,
   SendSmsStep,
@@ -13,11 +14,15 @@ import {
   Base64EncodeStep,
   Base64DecodeStep,
   StringFormatStep,
+  HtmlParserStep,
+  ExtractLinksStep,
+  ExtractTextStep,
 } from '../steps';
 
 @Module({
   imports: [EngineModule],
   providers: [
+    ConditionalStep,
     HttpClientStep,
     SendSmsStep,
     JsonMinifierStep,
@@ -29,8 +34,12 @@ import {
     StringFormatStep,
     Base64EncodeStep,
     Base64DecodeStep,
+    HtmlParserStep,
+    ExtractLinksStep,
+    ExtractTextStep,
   ],
   exports: [
+    ConditionalStep,
     HttpClientStep,
     SendSmsStep,
     JsonMinifierStep,
@@ -42,12 +51,16 @@ import {
     StringFormatStep,
     Base64EncodeStep,
     Base64DecodeStep,
+    HtmlParserStep,
+    ExtractLinksStep,
+    ExtractTextStep,
   ],
 })
 export class StepsModule implements OnModuleInit {
   constructor(private readonly engineService: EngineService) {}
 
   onModuleInit() {
+    this.engineService.registerStep(ConditionalStep);
     this.engineService.registerStep(HttpClientStep);
     this.engineService.registerStep(SendSmsStep);
     this.engineService.registerStep(JsonMinifierStep);
@@ -59,5 +72,8 @@ export class StepsModule implements OnModuleInit {
     this.engineService.registerStep(StringFormatStep);
     this.engineService.registerStep(Base64EncodeStep);
     this.engineService.registerStep(Base64DecodeStep);
+    this.engineService.registerStep(HtmlParserStep);
+    this.engineService.registerStep(ExtractLinksStep);
+    this.engineService.registerStep(ExtractTextStep);
   }
 }

@@ -22,7 +22,7 @@ export class Executor implements IExecutor {
     );
 
     try {
-      await this.executeSteps(ctx, flow.steps);
+      await this.executeSteps(ctx, flow.steps, flow.edges || []);
 
       ctx.status = 'completed';
       ctx.completedAt = new Date();
@@ -48,8 +48,48 @@ export class Executor implements IExecutor {
     return ctx;
   }
 
-  private async executeSteps(ctx: IContext, steps: any[]): Promise<void> {
+  private async executeSteps(
+    ctx: IContext,
+    steps: any[],
+    edges: any[],
+  ): Promise<void> {
+    const executed = new Set<string>();
+    const skipped = new Set<string>();
+
+    // Helper function to mark all descendants as skipped
+    const markDescendantsAsSkipped = (stepId: string) => {
+      const descendants = edges
+        .filter((e) => e.source === stepId)
+        .map((e) => e.target);
+
+      for (const descendantId of descendants) {
+        if (!executed.has(descendantId) && !skipped.has(descendantId)) {
+          skipped.add(descendantId);
+          markDescendantsAsSkipped(descendantId); // Recursively skip
+        }
+      }
+    };
+
     for (const step of steps) {
+      // Skip if already executed or marked as skipped
+      if (executed.has(step.id) || skipped.has(step.id)) {
+        continue;
+      }
+
+      // Check if this step should be skipped based on conditional branches
+      const incomingEdge = edges.find((e) => e.target === step.id);
+      if (incomingEdge?.branch) {
+        const sourceStep = steps.find((s) => s.id === incomingEdge.source);
+        if (sourceStep && executed.has(sourceStep.id)) {
+          const sourceResult = ctx.steps[sourceStep.name];
+          if (sourceResult?.branch !== incomingEdge.branch) {
+            skipped.add(step.id);
+            markDescendantsAsSkipped(step.id); // Skip all descendants
+            continue;
+          }
+        }
+      }
+
       ctx.logs.push(
         createStepLog(
           'INFO',
@@ -83,6 +123,8 @@ export class Executor implements IExecutor {
           };
         }
       }
+
+      executed.add(step.id);
 
       ctx.logs.push(
         createStepLog(

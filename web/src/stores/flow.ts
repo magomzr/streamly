@@ -1,14 +1,6 @@
 import { create } from 'zustand';
 import type { IFlow } from '@streamly/shared';
-import { apiService } from '../services/api';
-
-interface SavedFlow {
-  id: string;
-  name: string;
-  data: IFlow;
-  createdAt: string;
-  updatedAt: string;
-}
+import { apiService, type SavedFlow } from '../services/api';
 
 interface FlowStore {
   flows: SavedFlow[];

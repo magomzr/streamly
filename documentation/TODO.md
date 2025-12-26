@@ -4,7 +4,6 @@
 
 ### Critical Steps (Control Flow)
 
-- [ ] Conditional step (if/else branching)
 - [ ] Loop step (for_each iteration)
 - [ ] Parallel execution step
 
@@ -12,8 +11,6 @@
 
 - [ ] Real-time execution progress indicators (SSE/WebSocket)
 - [ ] Undo/redo functionality
-- [ ] Keyboard shortcuts (Ctrl+S, Delete, Ctrl+Z)
-- [ ] Copy/paste nodes
 - [ ] Duplicate flow
 
 ### Core Features
@@ -73,6 +70,7 @@
 
 ## Ideas / Future
 
+- [x] Scheduled flow execution (cron)
 - [ ] Visual flow diff for versioning
 - [ ] Flow marketplace/sharing
 - [ ] AI-powered step suggestions

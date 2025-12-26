@@ -19,9 +19,11 @@ import { StepNode } from './nodes/StepNode.js';
 import { NodeConfigPanel } from './NodeConfigPanel.js';
 import { Sidebar } from './Sidebar.js';
 import { ExecutionView } from './ExecutionView.js';
+import { ExecutionHistory } from './ExecutionHistory.js';
 import { VarsEditor } from './VarsEditor.js';
+import { TriggerConfig } from './TriggerConfig.js';
 import type { StepData, StepType } from '../types.js';
-import { STEP_LABELS, type IFlow } from '@streamly/shared';
+import { STEP_LABELS, type IFlow, type ITriggerConfig } from '@streamly/shared';
 import { apiService } from '../services/api.js';
 import { useExecutionStore } from '../stores/execution.js';
 import { useFlowStore } from '../stores/flow.js';
@@ -46,14 +48,21 @@ function FlowBuilderInner() {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [selectedNode, setSelectedNode] = useState<Node<StepData> | null>(null);
   const [flowName, setFlowName] = useState('Untitled Flow');
+  const [trigger, setTrigger] = useState<ITriggerConfig>({
+    type: 'http',
+    enabled: false,
+  });
   const [vars, setVars] = useState<Record<string, any>>({});
   const [showExecution, setShowExecution] = useState(false);
   const [showVarsEditor, setShowVarsEditor] = useState(false);
+  const [showTriggerConfig, setShowTriggerConfig] = useState(false);
+  const [showExecutionHistory, setShowExecutionHistory] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [showValidation, setShowValidation] = useState(false);
+  const [copiedNodes, setCopiedNodes] = useState<Node<StepData>[]>([]);
   const { isExecuting, setExecuting, setResult, setError } =
     useExecutionStore();
   const {
@@ -102,15 +111,52 @@ function FlowBuilderInner() {
 
   const onConnect: OnConnect = useCallback(
     (params) => {
+      const sourceNode = nodes.find((n) => n.id === params.source);
+      const isConditional = sourceNode?.data.stepType === 'conditional';
+
+      // For conditional nodes, determine branch based on sourceHandle
+      const branch = isConditional ? params.sourceHandle : undefined;
+
+      const edgeStyle = isConditional
+        ? {
+            stroke: branch === 'true' ? '#10b981' : '#ef4444',
+            strokeWidth: 2,
+          }
+        : {};
+
+      const labelStyle = isConditional
+        ? {
+            fill: branch === 'true' ? '#10b981' : '#ef4444',
+            fontWeight: 600,
+            fontSize: 12,
+          }
+        : {};
+
+      const markerColor = isConditional
+        ? branch === 'true'
+          ? '#10b981'
+          : '#ef4444'
+        : undefined;
+
       setEdges((eds) =>
         addEdge(
-          { ...params, markerEnd: { type: MarkerType.ArrowClosed } },
+          {
+            ...params,
+            label: isConditional ? branch?.toUpperCase() : undefined,
+            style: edgeStyle,
+            labelStyle,
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              color: markerColor,
+            },
+            data: { branch },
+          },
           eds,
         ),
       );
       setHasUnsavedChanges(true);
     },
-    [setEdges, setHasUnsavedChanges],
+    [nodes, setEdges, setHasUnsavedChanges],
   );
 
   const onNodeClick = useCallback(
@@ -200,17 +246,30 @@ function FlowBuilderInner() {
       steps: orderedSteps.map((node) => ({
         id: node.id,
         name: node.data.stepId,
+        label: node.data.label,
         type: node.data.stepType,
         settings: node.data.settings || {},
       })),
       edges: edges.map((edge) => ({
         source: edge.source,
         target: edge.target,
+        branch: edge.data?.branch as 'true' | 'false' | undefined,
       })),
+      trigger,
     };
-  }, [flowName, nodes, edges]);
+  }, [flowName, nodes, edges, trigger]);
 
   const handleSave = useCallback(async () => {
+    // Validate flow before saving
+    const errors = validateFlow(nodes, edges);
+    if (errors.length > 0) {
+      const errorList = errors.map((e) => `• ${e}`).join('\n');
+      const confirmed = confirm(
+        `Flow has ${errors.length} validation error${errors.length > 1 ? 's' : ''}:\n\n${errorList}\n\nDo you want to save anyway?`,
+      );
+      if (!confirmed) return;
+    }
+
     setIsSaving(true);
     try {
       const flow = buildFlow();
@@ -225,7 +284,15 @@ function FlowBuilderInner() {
     } finally {
       setIsSaving(false);
     }
-  }, [currentFlowId, buildFlow, createFlow, updateFlow, setCurrentFlowId]);
+  }, [
+    currentFlowId,
+    buildFlow,
+    createFlow,
+    updateFlow,
+    setCurrentFlowId,
+    nodes,
+    edges,
+  ]);
 
   const handleLoadFlow = useCallback(
     async (flowId: string) => {
@@ -233,31 +300,70 @@ function FlowBuilderInner() {
       if (!flow) return;
 
       setFlowName(flow.data.name);
-      setNodes(
-        flow.data.steps.map((step, idx) => ({
-          id: step.id,
-          type: 'step' as const,
-          position: { x: 100 + idx * 200, y: 100 },
-          data: {
-            label: step.name || 'Unnamed',
-            stepId: step.name || 'unnamed',
-            stepType: step.type,
-            settings: step.settings || {},
-          },
-        })),
-      );
-      setEdges(
-        (flow.data.edges || []).map((edge, idx) => ({
+      setTrigger(flow.data.trigger || { type: 'http', enabled: false });
+      const loadedNodes = flow.data.steps.map((step) => ({
+        id: step.id,
+        type: 'step' as const,
+        position: { x: 0, y: 0 },
+        data: {
+          label: step.label || step.name || 'Unnamed',
+          stepId: step.name || 'unnamed',
+          stepType: step.type,
+          settings: step.settings || {},
+        },
+      }));
+      const loadedEdges = (flow.data.edges || []).map((edge, idx) => {
+        const isConditional = edge.branch !== undefined;
+        return {
           id: `e${idx}`,
           source: edge.source,
           target: edge.target,
-          markerEnd: { type: MarkerType.ArrowClosed },
-        })),
-      );
+          sourceHandle: edge.branch || 'default',
+          label: isConditional ? edge.branch?.toUpperCase() : undefined,
+          style: isConditional
+            ? {
+                stroke: edge.branch === 'true' ? '#10b981' : '#ef4444',
+                strokeWidth: 2,
+              }
+            : {},
+          labelStyle: isConditional
+            ? {
+                fill: edge.branch === 'true' ? '#10b981' : '#ef4444',
+                fontWeight: 600,
+                fontSize: 12,
+              }
+            : {},
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            color: isConditional
+              ? edge.branch === 'true'
+                ? '#10b981'
+                : '#ef4444'
+              : undefined,
+          },
+          data: { branch: edge.branch },
+        };
+      });
+
+      const { nodes: layoutedNodes, edges: layoutedEdges } =
+        getLayoutedElements(loadedNodes, loadedEdges);
+
+      setNodes(layoutedNodes);
+      setEdges(layoutedEdges);
       setCurrentFlowId(flowId);
       setHasUnsavedChanges(false);
+      setShowTriggerConfig(false);
+      setShowExecutionHistory(false);
+      setTimeout(() => fitView({ duration: 200 }), 0);
     },
-    [flows, setNodes, setEdges, setCurrentFlowId, setHasUnsavedChanges],
+    [
+      flows,
+      setNodes,
+      setEdges,
+      setCurrentFlowId,
+      setHasUnsavedChanges,
+      fitView,
+    ],
   );
 
   const handleNewFlow = useCallback(() => {
@@ -265,6 +371,7 @@ function FlowBuilderInner() {
     setNodes([]);
     setEdges([]);
     setVars({});
+    setTrigger({ type: 'http', enabled: false });
     setCurrentFlowId(null);
     setHasUnsavedChanges(false);
   }, [setNodes, setEdges, setCurrentFlowId, setHasUnsavedChanges]);
@@ -345,41 +452,138 @@ function FlowBuilderInner() {
         const imported: IFlow = JSON.parse(text);
 
         setFlowName(imported.name);
-        setNodes(
-          imported.steps.map((step, idx) => ({
-            id: step.id,
-            type: 'step' as const,
-            position: { x: 100 + idx * 200, y: 100 },
-            data: {
-              label: step.name || 'Unnamed',
-              stepId: step.name || 'unnamed',
-              stepType: step.type,
-              settings: step.settings || {},
-            },
-          })),
-        );
-        setEdges(
-          (imported.edges || []).map((edge, idx) => ({
+        const loadedNodes = imported.steps.map((step) => ({
+          id: step.id,
+          type: 'step' as const,
+          position: { x: 0, y: 0 },
+          data: {
+            label: step.label || step.name || 'Unnamed',
+            stepId: step.name || 'unnamed',
+            stepType: step.type,
+            settings: step.settings || {},
+          },
+        }));
+        const loadedEdges = (imported.edges || []).map((edge, idx) => {
+          const isConditional = edge.branch !== undefined;
+          return {
             id: `e${idx}`,
             source: edge.source,
             target: edge.target,
-            markerEnd: { type: MarkerType.ArrowClosed },
-          })),
-        );
+            sourceHandle: edge.branch || 'default',
+            label: isConditional ? edge.branch?.toUpperCase() : undefined,
+            style: isConditional
+              ? {
+                  stroke: edge.branch === 'true' ? '#10b981' : '#ef4444',
+                  strokeWidth: 2,
+                }
+              : {},
+            labelStyle: isConditional
+              ? {
+                  fill: edge.branch === 'true' ? '#10b981' : '#ef4444',
+                  fontWeight: 600,
+                  fontSize: 12,
+                }
+              : {},
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              color: isConditional
+                ? edge.branch === 'true'
+                  ? '#10b981'
+                  : '#ef4444'
+                : undefined,
+            },
+            data: { branch: edge.branch },
+          };
+        });
+
+        const { nodes: layoutedNodes, edges: layoutedEdges } =
+          getLayoutedElements(loadedNodes, loadedEdges);
+
+        setNodes(layoutedNodes);
+        setEdges(layoutedEdges);
+        setTrigger(imported.trigger || { type: 'http', enabled: false });
         setCurrentFlowId(null);
         setHasUnsavedChanges(true);
+        setTimeout(() => fitView({ duration: 200 }), 0);
       } catch (err) {
         alert('Failed to import flow: Invalid JSON');
       }
     };
     input.click();
-  }, [setNodes, setEdges, setCurrentFlowId, setHasUnsavedChanges]);
+  }, [setNodes, setEdges, setCurrentFlowId, setHasUnsavedChanges, fitView]);
 
   const handleValidate = useCallback(() => {
     const errors = validateFlow(nodes, edges);
     setValidationErrors(errors);
     setShowValidation(true);
   }, [nodes, edges]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if typing in input
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      )
+        return;
+
+      // Ctrl/Cmd + S: Save
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        handleSave();
+      }
+
+      // Ctrl/Cmd + C: Copy selected nodes
+      if ((e.ctrlKey || e.metaKey) && e.key === 'c' && selectedNode) {
+        e.preventDefault();
+        setCopiedNodes([selectedNode]);
+      }
+
+      // Ctrl/Cmd + V: Paste nodes
+      if ((e.ctrlKey || e.metaKey) && e.key === 'v' && copiedNodes.length > 0) {
+        e.preventDefault();
+        const pastedNodes = copiedNodes.map((node) => {
+          const newId = generateUUID();
+          const existingIds = nodes.map((n) => n.data.stepId);
+          let stepId = node.data.stepId;
+          let counter = 2;
+          while (existingIds.includes(stepId)) {
+            stepId = `${node.data.stepId}_${counter}`;
+            counter++;
+          }
+          return {
+            ...node,
+            id: newId,
+            position: {
+              x: node.position.x + 50,
+              y: node.position.y + 50,
+            },
+            data: { ...node.data, stepId },
+          };
+        });
+        setNodes((nds) => [...nds, ...pastedNodes]);
+        setHasUnsavedChanges(true);
+      }
+
+      // Delete: Delete selected node
+      if (e.key === 'Delete' && selectedNode) {
+        e.preventDefault();
+        handleDeleteNode(selectedNode.id);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [
+    selectedNode,
+    copiedNodes,
+    nodes,
+    handleSave,
+    handleDeleteNode,
+    setNodes,
+    setHasUnsavedChanges,
+  ]);
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
@@ -422,6 +626,69 @@ function FlowBuilderInner() {
         onUpdate={handleNodeUpdate}
         isDark={isDark}
       />
+
+      <div
+        style={{
+          position: 'absolute',
+          top: '20px',
+          right: '20px',
+          zIndex: 10,
+        }}
+      >
+        {!showTriggerConfig ? (
+          <button
+            onClick={() => setShowTriggerConfig(true)}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: isDark ? '#374151' : 'white',
+              color: isDark ? '#f3f4f6' : '#6b7280',
+              border: `1px solid ${isDark ? '#4b5563' : '#e5e7eb'}`,
+              borderRadius: '6px',
+              fontSize: '13px',
+              fontWeight: 500,
+              cursor: 'pointer',
+              boxShadow: isDark
+                ? '0 2px 8px rgba(0,0,0,0.5)'
+                : '0 2px 8px rgba(0,0,0,0.1)',
+            }}
+          >
+            ⚙️ Trigger
+          </button>
+        ) : (
+          <div style={{ width: '320px' }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                marginBottom: '8px',
+              }}
+            >
+              <button
+                onClick={() => setShowTriggerConfig(false)}
+                style={{
+                  padding: '4px 8px',
+                  backgroundColor: isDark ? '#374151' : 'white',
+                  color: isDark ? '#f3f4f6' : '#6b7280',
+                  border: `1px solid ${isDark ? '#4b5563' : '#e5e7eb'}`,
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            <TriggerConfig
+              trigger={trigger}
+              onChange={(newTrigger) => {
+                setTrigger(newTrigger);
+                setHasUnsavedChanges(true);
+              }}
+              isDark={isDark}
+            />
+          </div>
+        )}
+      </div>
 
       <div
         style={{
@@ -716,6 +983,24 @@ function FlowBuilderInner() {
           Variables{' '}
           {Object.keys(vars).length > 0 && `(${Object.keys(vars).length})`}
         </button>
+
+        {currentFlowId && (
+          <button
+            onClick={() => setShowExecutionHistory(true)}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: 'white',
+              color: '#6b7280',
+              border: '1px solid #e5e7eb',
+              borderRadius: '6px',
+              fontSize: '14px',
+              fontWeight: 500,
+              cursor: 'pointer',
+            }}
+          >
+            📊 History
+          </button>
+        )}
       </div>
 
       {showVarsEditor && (
@@ -731,6 +1016,14 @@ function FlowBuilderInner() {
 
       {showExecution && (
         <ExecutionView onClose={() => setShowExecution(false)} />
+      )}
+
+      {showExecutionHistory && currentFlowId && (
+        <ExecutionHistory
+          flowId={currentFlowId}
+          onClose={() => setShowExecutionHistory(false)}
+          isDark={isDark}
+        />
       )}
 
       {showValidation && (

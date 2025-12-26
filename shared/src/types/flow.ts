@@ -1,4 +1,5 @@
 export type StepType =
+  | 'conditional'
   | 'http_request'
   | 'send_sms'
   | 'json_minifier'
@@ -9,11 +10,15 @@ export type StepType =
   | 'sort_array'
   | 'string_format'
   | 'base64_encode'
-  | 'base64_decode';
+  | 'base64_decode'
+  | 'html_parser'
+  | 'extract_links'
+  | 'extract_text';
 
 export interface IStepDefinition {
   id: string;
   name?: string;
+  label?: string;
   type: StepType;
   settings?: Record<string, any>;
   retry?: {
@@ -21,8 +26,23 @@ export interface IStepDefinition {
   };
 }
 
+export interface IEdge {
+  source: string;
+  target: string;
+  branch?: 'true' | 'false';
+}
+
+export type TriggerType = 'http' | 'cron';
+
+export interface ITriggerConfig {
+  type: TriggerType;
+  cronExpression?: string;
+  enabled?: boolean;
+}
+
 export interface IFlow {
   name: string;
   steps: IStepDefinition[];
-  edges?: Array<{ source: string; target: string }>;
+  edges?: IEdge[];
+  trigger?: ITriggerConfig;
 }
