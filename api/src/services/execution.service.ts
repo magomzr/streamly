@@ -6,10 +6,14 @@ import type { IContext } from '@streamly/shared';
 
 @Injectable()
 export class ExecutionService {
-  async create(flowId: string, context: IContext) {
+  async create(
+    flowId: string,
+    context: IContext,
+    triggeredBy: string = 'http',
+  ) {
     const [created] = await db
       .insert(executions)
-      .values({ flowId, context, status: context.status })
+      .values({ flowId, context, status: context.status, triggeredBy })
       .returning();
     return created;
   }

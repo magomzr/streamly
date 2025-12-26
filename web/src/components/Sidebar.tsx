@@ -93,55 +93,84 @@ export function Sidebar({ onLoadFlow, onNewFlow, isDark }: SidebarProps) {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            {flows.map((flow) => (
-              <div
-                key={flow.id}
-                onClick={() => onLoadFlow(flow.id)}
-                style={{
-                  padding: '6px 8px',
-                  backgroundColor:
-                    currentFlowId === flow.id
-                      ? isDark
-                        ? '#1e3a8a'
-                        : '#dbeafe'
-                      : isDark
-                        ? '#374151'
-                        : 'white',
-                  border: `1px solid ${currentFlowId === flow.id ? (isDark ? '#3b82f6' : '#93c5fd') : isDark ? '#4b5563' : '#e5e7eb'}`,
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '11px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  color: isDark ? '#f3f4f6' : '#111827',
-                }}
-              >
-                <span
+            {flows.map((flow) => {
+              const isCron = flow.triggerType === 'cron';
+              const isEnabled = flow.enabled;
+              return (
+                <div
+                  key={flow.id}
+                  onClick={() => onLoadFlow(flow.id)}
                   style={{
-                    fontWeight: 500,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {flow.name}
-                </span>
-                <button
-                  onClick={(e) => handleDelete(e, flow.id)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#ef4444',
+                    padding: '6px 8px',
+                    backgroundColor:
+                      currentFlowId === flow.id
+                        ? isDark
+                          ? '#1e3a8a'
+                          : '#dbeafe'
+                        : isDark
+                          ? '#374151'
+                          : 'white',
+                    border: `1px solid ${currentFlowId === flow.id ? (isDark ? '#3b82f6' : '#93c5fd') : isDark ? '#4b5563' : '#e5e7eb'}`,
+                    borderRadius: '4px',
                     cursor: 'pointer',
-                    fontSize: '14px',
-                    padding: '0 4px',
+                    fontSize: '11px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    color: isDark ? '#f3f4f6' : '#111827',
                   }}
                 >
-                  ×
-                </button>
-              </div>
-            ))}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      flex: 1,
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {isCron && (
+                      <span
+                        style={{
+                          fontSize: '12px',
+                          color: isEnabled ? '#10b981' : '#6b7280',
+                        }}
+                        title={
+                          isEnabled
+                            ? 'Scheduled (Active)'
+                            : 'Scheduled (Inactive)'
+                        }
+                      >
+                        ⏰
+                      </span>
+                    )}
+                    <span
+                      style={{
+                        fontWeight: 500,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {flow.name}
+                    </span>
+                  </div>
+                  <button
+                    onClick={(e) => handleDelete(e, flow.id)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#ef4444',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      padding: '0 4px',
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

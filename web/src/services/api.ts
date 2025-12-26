@@ -7,9 +7,14 @@ interface SavedFlow {
   id: string;
   name: string;
   data: IFlow;
+  triggerType: string;
+  cronExpression: string | null;
+  enabled: boolean;
   createdAt: string;
   updatedAt: string;
 }
+
+export type { SavedFlow };
 
 export const apiService = {
   async executeFlow(
@@ -89,6 +94,49 @@ export const apiService = {
       body: JSON.stringify({ vars }),
     });
     if (!response.ok) throw new Error('Failed to execute flow');
+    return response.json();
+  },
+
+  async updateTrigger(
+    id: string,
+    type: string,
+    cronExpression?: string,
+    enabled?: boolean,
+  ): Promise<SavedFlow> {
+    const response = await fetch(`${API_BASE_URL}/flows/${id}/trigger`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, cronExpression, enabled }),
+    });
+    if (!response.ok) throw new Error('Failed to update trigger');
+    return response.json();
+  },
+
+  async enableFlow(id: string): Promise<SavedFlow> {
+    const response = await fetch(`${API_BASE_URL}/flows/${id}/enable`, {
+      method: 'POST',
+    });
+    if (!response.ok) throw new Error('Failed to enable flow');
+    return response.json();
+  },
+
+  async disableFlow(id: string): Promise<SavedFlow> {
+    const response = await fetch(`${API_BASE_URL}/flows/${id}/disable`, {
+      method: 'POST',
+    });
+    if (!response.ok) throw new Error('Failed to disable flow');
+    return response.json();
+  },
+
+  async getScheduledFlows(): Promise<SavedFlow[]> {
+    const response = await fetch(`${API_BASE_URL}/flows/scheduled/list`);
+    if (!response.ok) throw new Error('Failed to fetch scheduled flows');
+    return response.json();
+  },
+
+  async getExecutions(flowId: string): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL}/flows/${flowId}/executions`);
+    if (!response.ok) throw new Error('Failed to fetch executions');
     return response.json();
   },
 };
