@@ -2,14 +2,14 @@ import { StepRegistry } from '../../src/registry/stepRegistry';
 import { IStepConstructor } from '../../src/types';
 
 class MockStep {
-  static stepType = 'mock_step';
+  static readonly stepType = 'mock_step';
   async run() {
     return {};
   }
 }
 
 class AnotherStep {
-  static stepType = 'another_step';
+  static readonly stepType = 'another_step';
   async run() {
     return {};
   }
@@ -46,7 +46,7 @@ describe('StepRegistry', () => {
 
   it('should overwrite step if registered twice', () => {
     class UpdatedMockStep {
-      static stepType = 'mock_step';
+      static readonly stepType = 'mock_step';
       async run() {
         return { updated: true };
       }

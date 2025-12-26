@@ -6,6 +6,7 @@ import {
   HttpClientStep,
   WebhookStep,
   SendSmsStep,
+  SendEmailStep,
   DelayStep,
   FilterArrayStep,
   SortArrayStep,
@@ -25,6 +26,7 @@ import {
     ConditionalStep,
     HttpClientStep,
     SendSmsStep,
+    SendEmailStep,
     JsonMinifierStep,
     DelayStep,
     TransformDataStep,
@@ -42,6 +44,7 @@ import {
     ConditionalStep,
     HttpClientStep,
     SendSmsStep,
+    SendEmailStep,
     JsonMinifierStep,
     DelayStep,
     TransformDataStep,
@@ -63,6 +66,7 @@ export class StepsModule implements OnModuleInit {
     this.engineService.registerStep(ConditionalStep);
     this.engineService.registerStep(HttpClientStep);
     this.engineService.registerStep(SendSmsStep);
+    this.engineService.registerStep(SendEmailStep);
     this.engineService.registerStep(JsonMinifierStep);
     this.engineService.registerStep(DelayStep);
     this.engineService.registerStep(TransformDataStep);

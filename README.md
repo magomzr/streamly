@@ -133,7 +133,7 @@ import { createStepLog } from '../../../utils/logger';
 
 @Injectable()
 export class YourNewStep implements IStepExecutor {
-  static stepType = 'your_new_step';
+  static readonly stepType = 'your_new_step';
 
   async run(ctx: IContext, settings: any): Promise<any> {
     const { fieldName } = settings;

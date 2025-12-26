@@ -4,7 +4,7 @@ import { createStepLog } from '../../../utils/logger';
 
 @Injectable()
 export class TransformDataStep implements IStepExecutor {
-  static stepType = 'transform_data';
+  static readonly stepType = 'transform_data';
 
   async run(ctx: IContext, settings: any): Promise<any> {
     const { mapping } = settings;

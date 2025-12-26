@@ -1,3 +1,6 @@
+## 0.0.8
+- Implement send_email step with Gmail (#38)
+
 ## 0.0.7
 
 - Implement conditional/branching step (#28)

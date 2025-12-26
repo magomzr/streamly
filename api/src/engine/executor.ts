@@ -4,7 +4,7 @@ import { generateUUID } from '../utils/uuid';
 import { IStepRegistry, IContext, IFlow, IExecutor } from '../types';
 
 export class Executor implements IExecutor {
-  constructor(private registry: IStepRegistry) {}
+  constructor(private readonly registry: IStepRegistry) {}
 
   async run(flow: IFlow, vars: Record<string, any>): Promise<IContext> {
     const ctx: IContext = {
@@ -73,6 +73,22 @@ export class Executor implements IExecutor {
     for (const step of steps) {
       // Skip if already executed or marked as skipped
       if (executed.has(step.id) || skipped.has(step.id)) {
+        continue;
+      }
+
+      // Check if step is connected (has incoming edge or is first step)
+      const hasIncomingEdge = edges.some((e) => e.target === step.id);
+      const isFirstStep = steps[0]?.id === step.id;
+
+      if (!hasIncomingEdge && !isFirstStep) {
+        ctx.logs.push(
+          createStepLog(
+            'WARN',
+            'Executor',
+            `Skipping disconnected step: ${step.type} with id: ${step.id}`,
+          ),
+        );
+        skipped.add(step.id);
         continue;
       }
 

@@ -5,7 +5,7 @@ import { createStepLog } from '../../../utils/logger';
 
 @Injectable()
 export class ExtractTextStep implements IStepExecutor {
-  static stepType = 'extract_text';
+  static readonly stepType = 'extract_text';
 
   async run(ctx: IContext, settings: any): Promise<any> {
     const { html } = settings;
