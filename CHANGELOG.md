@@ -1,5 +1,6 @@
 ## 0.0.8
 - Implement send_email step with Gmail (#38)
+- Add a section for flows that are running in the background (#40)
 
 ## 0.0.7
 

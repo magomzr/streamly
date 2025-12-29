@@ -134,6 +134,18 @@ export const apiService = {
     return response.json();
   },
 
+  async getActiveScheduledFlows(): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL}/flows/scheduled/active`);
+    if (!response.ok) throw new Error('Failed to fetch active scheduled flows');
+    return response.json();
+  },
+
+  async getActiveFlowsCount(): Promise<{ active: number }> {
+    const response = await fetch(`${API_BASE_URL}/flows/scheduled/count`);
+    if (!response.ok) throw new Error('Failed to fetch active flows count');
+    return response.json();
+  },
+
   async getExecutions(flowId: string): Promise<any[]> {
     const response = await fetch(`${API_BASE_URL}/flows/${flowId}/executions`);
     if (!response.ok) throw new Error('Failed to fetch executions');
