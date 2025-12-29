@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { SchedulerService } from './scheduler.service';
-import { FlowService } from './flow.service';
-import { ExecutionService } from './execution.service';
-import { EngineService } from '../engine/engine.service';
+import { SchedulerService } from '../../src/services/scheduler.service';
+import { FlowService } from '../../src/services/flow.service';
+import { ExecutionService } from '../../src/services/execution.service';
+import { EngineService } from '../../src/engine/engine.service';
 
 describe('SchedulerService', () => {
   let service: SchedulerService;

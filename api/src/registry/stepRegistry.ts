@@ -3,7 +3,7 @@ import { IStepConstructor, IStepRegistry } from '../types';
 
 @Injectable()
 export class StepRegistry implements IStepRegistry {
-  private steps = new Map<string, IStepConstructor>();
+  private readonly steps = new Map<string, IStepConstructor>();
 
   register(stepCtor: IStepConstructor): void {
     this.steps.set(stepCtor.stepType, stepCtor);
