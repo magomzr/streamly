@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { ITriggerConfig } from '@streamly/shared';
 import { VarsEditor } from './VarsEditor.js';
+import { SecretsManager } from './SecretsManager.js';
 
 interface OptionsPanelProps {
   trigger: ITriggerConfig;
@@ -45,6 +46,7 @@ export function OptionsPanel({
   const [enabled, setEnabled] = useState(trigger?.enabled || false);
   const [showPresets, setShowPresets] = useState(false);
   const [showVarsEditor, setShowVarsEditor] = useState(false);
+  const [showSecretsManager, setShowSecretsManager] = useState(false);
 
   const handleTypeChange = (newType: 'http' | 'cron') => {
     setType(newType);
@@ -314,6 +316,50 @@ export function OptionsPanel({
         )}
       </div>
 
+      {/* Secrets Section */}
+      <div
+        style={{
+          padding: '16px',
+          borderBottom: `1px solid ${isDark ? '#374151' : '#e5e7eb'}`,
+        }}
+      >
+        <h4
+          style={{
+            margin: '0 0 8px 0',
+            fontSize: '14px',
+            fontWeight: 600,
+            color: isDark ? '#f3f4f6' : '#111827',
+          }}
+        >
+          Secrets
+        </h4>
+        <button
+          onClick={() => setShowSecretsManager(true)}
+          style={{
+            width: '100%',
+            padding: '8px',
+            backgroundColor: isDark ? '#374151' : 'white',
+            color: isDark ? '#d1d5db' : '#374151',
+            border: `1px solid ${isDark ? '#4b5563' : '#d1d5db'}`,
+            borderRadius: '6px',
+            fontSize: '13px',
+            fontWeight: 500,
+            cursor: 'pointer',
+          }}
+        >
+          Manage secrets
+        </button>
+        <div
+          style={{
+            marginTop: '8px',
+            fontSize: '11px',
+            color: isDark ? '#9ca3af' : '#6b7280',
+          }}
+        >
+          Use {'{{secret.NAME}}'} in step settings
+        </div>
+      </div>
+
       {/* Variables Section */}
       <div
         style={{
@@ -470,6 +516,13 @@ export function OptionsPanel({
             setShowVarsEditor(false);
           }}
           onClose={() => setShowVarsEditor(false)}
+        />
+      )}
+
+      {showSecretsManager && (
+        <SecretsManager
+          isDark={isDark}
+          onClose={() => setShowSecretsManager(false)}
         />
       )}
     </div>

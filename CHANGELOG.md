@@ -2,6 +2,7 @@
 - Implement send_email step with Gmail (#38)
 - Add a section for flows that are running in the background (#40)
 - Move the Options button to a different location and include the Streamly logo (#41)
+- Implement secrets management (#42)
 
 ## 0.0.7
 

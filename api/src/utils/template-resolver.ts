@@ -29,29 +29,47 @@ export function resolveTemplates(obj: any, ctx: IContext): any {
  * Resolves template variables in a string.
  * Example: "Hello {{vars.name}}" -> "Hello John"
  * If the entire string is a single template, returns the value directly (preserves arrays/objects)
+ * Ignores {{secret.*}} patterns (handled by SecretsService)
  */
 function resolveString(template: string, ctx: IContext): any {
+  // Skip secret references
+  if (/^\{\{secret\.[^}]+\}\}$/.test(template)) {
+    return template;
+  }
+
   const singleTemplateMatch = /^\{\{([^}]+)\}\}$/.exec(template);
 
   if (singleTemplateMatch) {
     const path = singleTemplateMatch[1].trim();
+    // Skip secret references
+    if (path.startsWith('secret.')) {
+      return template;
+    }
     const value = getValueByPath(ctx, path);
-    return value !== undefined && value !== null ? value : '';
+    return value ?? '';
   }
 
-  return template.replace(/\{\{([^}]+)\}\}/g, (match: string, path: string) => {
-    const value = getValueByPath(ctx, path.trim());
+  return template.replaceAll(
+    /\{\{([^}]+)\}\}/g,
+    (match: string, path: string) => {
+      const trimmedPath = path.trim();
+      // Skip secret references
+      if (trimmedPath.startsWith('secret.')) {
+        return match;
+      }
+      const value = getValueByPath(ctx, trimmedPath);
 
-    if (value === undefined || value === null) {
-      return '';
-    }
+      if (value === undefined || value === null) {
+        return '';
+      }
 
-    if (typeof value === 'object') {
-      return JSON.stringify(value);
-    }
+      if (typeof value === 'object') {
+        return JSON.stringify(value);
+      }
 
-    return String(value);
-  });
+      return String(value);
+    },
+  );
 }
 
 /**

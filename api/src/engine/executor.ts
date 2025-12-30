@@ -2,9 +2,13 @@ import { createStepLog } from '../utils/logger';
 import { resolveTemplates } from '../utils/template-resolver';
 import { generateUUID } from '../utils/uuid';
 import { IStepRegistry, IContext, IFlow, IExecutor } from '../types';
+import { SecretsService } from '../services/secrets.service';
 
 export class Executor implements IExecutor {
-  constructor(private readonly registry: IStepRegistry) {}
+  constructor(
+    private readonly registry: IStepRegistry,
+    private readonly secretsService?: SecretsService,
+  ) {}
 
   async run(flow: IFlow, vars: Record<string, any>): Promise<IContext> {
     const ctx: IContext = {
@@ -171,7 +175,14 @@ export class Executor implements IExecutor {
         const StepCtor = this.registry.resolve(step.type);
         const instance = new StepCtor();
 
-        const resolvedSettings = resolveTemplates(step.settings || {}, ctx);
+        let resolvedSettings = resolveTemplates(step.settings || {}, ctx);
+
+        // Resolve secrets if service is available
+        if (this.secretsService) {
+          resolvedSettings =
+            await this.secretsService.resolveSecretsInObject(resolvedSettings);
+        }
+
         return await instance.run(ctx, resolvedSettings);
       } catch (error) {
         lastError = error;

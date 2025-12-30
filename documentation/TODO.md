@@ -16,7 +16,6 @@
 ### Core Features
 
 - [ ] Flow versioning and history
-- [ ] Secrets management (env variables, encrypted storage)
 - [ ] Flow execution timeout and cancellation
 - [ ] Error handling strategies (retry, fallback, skip)
 
