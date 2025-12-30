@@ -209,6 +209,7 @@ pnpm dev
 - [Shared Package](./shared/README.md)
 - [Web Documentation](./web/README.md)
 - [Cron Triggers - Scheduled Execution](./documentation/CRON_TRIGGERS.md)
+- [Secrets Management - Secure Credentials](./documentation/SECRETS_MANAGEMENT.md)
 - [Architecture](./documentation/)
 - [Roadmap and TODO](./documentation/TODO.md)
 

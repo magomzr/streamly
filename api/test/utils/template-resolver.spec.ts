@@ -6,23 +6,23 @@ describe('Template Resolver', () => {
 
   beforeEach(() => {
     ctx = {
-      id: '123',
-      name: 'Test Flow',
+      id: 'test-id',
+      name: 'test-flow',
       vars: {
-        userName: 'John',
-        count: 42,
+        name: 'John',
+        age: 30,
+        city: 'New York',
       },
       steps: {
-        fetchTodos: [
-          { id: 1, title: 'Todo 1', completed: true },
-          { id: 2, title: 'Todo 2', completed: false },
-          { id: 3, title: 'Todo 3', completed: true },
-        ],
         fetchUser: {
           id: 1,
-          name: 'John Doe',
+          username: 'johndoe',
           email: 'john@example.com',
         },
+        fetchTodos: [
+          { id: 1, title: 'Task 1' },
+          { id: 2, title: 'Task 2' },
+        ],
       },
       logs: [],
       status: 'running',
@@ -30,141 +30,284 @@ describe('Template Resolver', () => {
     };
   });
 
-  describe('Array handling', () => {
-    it('should preserve array when template is a single reference', () => {
-      const settings = {
-        array: '{{steps.fetchTodos}}',
-      };
-
-      const resolved = resolveTemplates(settings, ctx);
-
-      expect(Array.isArray(resolved.array)).toBe(true);
-      expect(resolved.array).toHaveLength(3);
-      expect(resolved.array[0]).toEqual({
-        id: 1,
-        title: 'Todo 1',
-        completed: true,
-      });
+  describe('string templates', () => {
+    it('should resolve simple variable', () => {
+      const result = resolveTemplates('Hello {{vars.name}}', ctx);
+      expect(result).toBe('Hello John');
     });
 
-    it('should stringify array when template is part of a string', () => {
-      const settings = {
-        message: 'Todos: {{steps.fetchTodos}}',
-      };
+    it('should resolve multiple variables', () => {
+      const result = resolveTemplates(
+        '{{vars.name}} is {{vars.age}} years old',
+        ctx,
+      );
+      expect(result).toBe('John is 30 years old');
+    });
 
-      const resolved = resolveTemplates(settings, ctx);
+    it('should resolve step output', () => {
+      const result = resolveTemplates(
+        'User: {{steps.fetchUser.username}}',
+        ctx,
+      );
+      expect(result).toBe('User: johndoe');
+    });
 
-      expect(typeof resolved.message).toBe('string');
-      expect(resolved.message).toContain('Todos: [');
+    it('should return empty string for undefined values', () => {
+      const result = resolveTemplates('Value: {{vars.nonexistent}}', ctx);
+      expect(result).toBe('Value: ');
+    });
+
+    it('should return empty string for null values', () => {
+      ctx.vars.nullValue = null;
+      const result = resolveTemplates('Value: {{vars.nullValue}}', ctx);
+      expect(result).toBe('Value: ');
     });
   });
 
-  describe('Object handling', () => {
-    it('should preserve object when template is a single reference', () => {
-      const settings = {
-        user: '{{steps.fetchUser}}',
-      };
+  describe('single template (entire string)', () => {
+    it('should return value directly for single template', () => {
+      const result = resolveTemplates('{{vars.age}}', ctx);
+      expect(result).toBe(30);
+    });
 
-      const resolved = resolveTemplates(settings, ctx);
+    it('should preserve arrays', () => {
+      const result = resolveTemplates('{{steps.fetchTodos}}', ctx);
+      expect(result).toEqual([
+        { id: 1, title: 'Task 1' },
+        { id: 2, title: 'Task 2' },
+      ]);
+    });
 
-      expect(typeof resolved.user).toBe('object');
-      expect(resolved.user).toEqual({
+    it('should preserve objects', () => {
+      const result = resolveTemplates('{{steps.fetchUser}}', ctx);
+      expect(result).toEqual({
         id: 1,
-        name: 'John Doe',
+        username: 'johndoe',
         email: 'john@example.com',
       });
     });
 
-    it('should access nested object properties', () => {
-      const settings = {
-        email: '{{steps.fetchUser.email}}',
-      };
-
-      const resolved = resolveTemplates(settings, ctx);
-
-      expect(resolved.email).toBe('john@example.com');
+    it('should return empty string for undefined single template', () => {
+      const result = resolveTemplates('{{vars.nonexistent}}', ctx);
+      expect(result).toBe('');
     });
   });
 
-  describe('String interpolation', () => {
-    it('should replace simple variable', () => {
-      const settings = {
-        message: 'Hello {{vars.userName}}',
+  describe('objects', () => {
+    it('should resolve templates in object values', () => {
+      const obj = {
+        greeting: 'Hello {{vars.name}}',
+        age: '{{vars.age}}',
       };
 
-      const resolved = resolveTemplates(settings, ctx);
+      const result = resolveTemplates(obj, ctx);
 
-      expect(resolved.message).toBe('Hello John');
+      expect(result).toEqual({
+        greeting: 'Hello John',
+        age: 30,
+      });
     });
 
-    it('should replace multiple variables', () => {
-      const settings = {
-        message: 'User: {{vars.userName}}, Count: {{vars.count}}',
-      };
-
-      const resolved = resolveTemplates(settings, ctx);
-
-      expect(resolved.message).toBe('User: John, Count: 42');
-    });
-
-    it('should handle nested properties', () => {
-      const settings = {
-        message: 'Email: {{steps.fetchUser.email}}',
-      };
-
-      const resolved = resolveTemplates(settings, ctx);
-
-      expect(resolved.message).toBe('Email: john@example.com');
-    });
-  });
-
-  describe('Edge cases', () => {
-    it('should return empty string for undefined values', () => {
-      const settings = {
-        value: '{{steps.nonExistent}}',
-      };
-
-      const resolved = resolveTemplates(settings, ctx);
-
-      expect(resolved.value).toBe('');
-    });
-
-    it('should handle nested objects in settings', () => {
-      const settings = {
-        payload: {
-          user: '{{vars.userName}}',
-          data: {
-            email: '{{steps.fetchUser.email}}',
-          },
+    it('should resolve nested objects', () => {
+      const obj = {
+        user: {
+          name: '{{vars.name}}',
+          location: '{{vars.city}}',
         },
       };
 
-      const resolved = resolveTemplates(settings, ctx);
+      const result = resolveTemplates(obj, ctx);
 
-      expect(resolved.payload.user).toBe('John');
-      expect(resolved.payload.data.email).toBe('john@example.com');
+      expect(result).toEqual({
+        user: {
+          name: 'John',
+          location: 'New York',
+        },
+      });
+    });
+  });
+
+  describe('arrays', () => {
+    it('should resolve templates in arrays', () => {
+      const arr = ['{{vars.name}}', '{{vars.city}}', 'static'];
+
+      const result = resolveTemplates(arr, ctx);
+
+      expect(result).toEqual(['John', 'New York', 'static']);
     });
 
-    it('should preserve non-template strings', () => {
-      const settings = {
-        message: 'No templates here',
+    it('should resolve nested arrays', () => {
+      const arr = [['{{vars.name}}'], ['{{vars.age}}']];
+
+      const result = resolveTemplates(arr, ctx);
+
+      expect(result).toEqual([['John'], [30]]);
+    });
+  });
+
+  describe('complex nested structures', () => {
+    it('should resolve deeply nested structures', () => {
+      const obj = {
+        users: [
+          {
+            name: '{{vars.name}}',
+            details: {
+              age: '{{vars.age}}',
+              city: '{{vars.city}}',
+            },
+          },
+        ],
       };
 
-      const resolved = resolveTemplates(settings, ctx);
+      const result = resolveTemplates(obj, ctx);
 
-      expect(resolved.message).toBe('No templates here');
+      expect(result).toEqual({
+        users: [
+          {
+            name: 'John',
+            details: {
+              age: 30,
+              city: 'New York',
+            },
+          },
+        ],
+      });
+    });
+  });
+
+  describe('object values in templates', () => {
+    it('should stringify objects when embedded in strings', () => {
+      const result = resolveTemplates('User: {{steps.fetchUser}}', ctx);
+      expect(result).toBe(
+        'User: {"id":1,"username":"johndoe","email":"john@example.com"}',
+      );
     });
 
-    it('should preserve numbers and booleans', () => {
-      const settings = {
-        count: 42,
-        active: true,
+    it('should stringify arrays when embedded in strings', () => {
+      const result = resolveTemplates('Todos: {{steps.fetchTodos}}', ctx);
+      expect(result).toBe(
+        'Todos: [{"id":1,"title":"Task 1"},{"id":2,"title":"Task 2"}]',
+      );
+    });
+  });
+
+  describe('primitives', () => {
+    it('should return numbers unchanged', () => {
+      const result = resolveTemplates(42, ctx);
+      expect(result).toBe(42);
+    });
+
+    it('should return booleans unchanged', () => {
+      const result = resolveTemplates(true, ctx);
+      expect(result).toBe(true);
+    });
+
+    it('should return null unchanged', () => {
+      const result = resolveTemplates(null, ctx);
+      expect(result).toBe(null);
+    });
+
+    it('should return undefined unchanged', () => {
+      const result = resolveTemplates(undefined, ctx);
+      expect(result).toBe(undefined);
+    });
+  });
+
+  describe('secret references', () => {
+    it('should NOT resolve secret references (single template)', () => {
+      const result = resolveTemplates('{{secret.API_KEY}}', ctx);
+      expect(result).toBe('{{secret.API_KEY}}');
+    });
+
+    it('should NOT resolve secret references (embedded)', () => {
+      const result = resolveTemplates('Key: {{secret.API_KEY}}', ctx);
+      expect(result).toBe('Key: {{secret.API_KEY}}');
+    });
+
+    it('should NOT resolve secret references in objects', () => {
+      const obj = {
+        apiKey: '{{secret.API_KEY}}',
+        name: '{{vars.name}}',
       };
 
-      const resolved = resolveTemplates(settings, ctx);
+      const result = resolveTemplates(obj, ctx);
 
-      expect(resolved.count).toBe(42);
-      expect(resolved.active).toBe(true);
+      expect(result).toEqual({
+        apiKey: '{{secret.API_KEY}}',
+        name: 'John',
+      });
+    });
+
+    it('should NOT resolve secret references in arrays', () => {
+      const arr = ['{{secret.KEY1}}', '{{vars.name}}', '{{secret.KEY2}}'];
+
+      const result = resolveTemplates(arr, ctx);
+
+      expect(result).toEqual(['{{secret.KEY1}}', 'John', '{{secret.KEY2}}']);
+    });
+
+    it('should handle mixed templates with secrets', () => {
+      const result = resolveTemplates(
+        'User {{vars.name}} with key {{secret.API_KEY}}',
+        ctx,
+      );
+      expect(result).toBe('User John with key {{secret.API_KEY}}');
+    });
+
+    it('should preserve secret references in nested structures', () => {
+      const obj = {
+        auth: {
+          user: '{{vars.name}}',
+          token: '{{secret.AUTH_TOKEN}}',
+        },
+        headers: {
+          'X-API-Key': '{{secret.API_KEY}}',
+        },
+      };
+
+      const result = resolveTemplates(obj, ctx);
+
+      expect(result).toEqual({
+        auth: {
+          user: 'John',
+          token: '{{secret.AUTH_TOKEN}}',
+        },
+        headers: {
+          'X-API-Key': '{{secret.API_KEY}}',
+        },
+      });
+    });
+  });
+
+  describe('edge cases', () => {
+    it('should handle empty strings', () => {
+      const result = resolveTemplates('', ctx);
+      expect(result).toBe('');
+    });
+
+    it('should handle strings without templates', () => {
+      const result = resolveTemplates('No templates here', ctx);
+      expect(result).toBe('No templates here');
+    });
+
+    it('should handle malformed templates', () => {
+      const result = resolveTemplates('{{incomplete', ctx);
+      expect(result).toBe('{{incomplete');
+    });
+
+    it('should handle empty objects', () => {
+      const result = resolveTemplates({}, ctx);
+      expect(result).toEqual({});
+    });
+
+    it('should handle empty arrays', () => {
+      const result = resolveTemplates([], ctx);
+      expect(result).toEqual([]);
+    });
+
+    it('should handle whitespace in template paths', () => {
+      const result = resolveTemplates('{{ vars.name }}', ctx);
+      expect(result).toBe('John');
     });
   });
 });
