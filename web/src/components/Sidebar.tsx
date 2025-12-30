@@ -4,6 +4,7 @@ import { useFlowStore } from '../stores/flow';
 import { CategoryAccordion } from './CategoryAccordion';
 import { ActiveFlowsMonitor } from './ActiveFlowsMonitor';
 import { Spinner } from './Spinner';
+import { Logo } from './Logo';
 import { STEP_CATEGORIES } from '@streamly/shared';
 
 interface SidebarProps {
@@ -52,6 +53,7 @@ export function Sidebar({ onLoadFlow, onNewFlow, isDark }: SidebarProps) {
         flexDirection: 'column',
       }}
     >
+      <Logo />
       <ActiveFlowsMonitor isDark={isDark} refreshTrigger={refreshMonitor} />
 
       <div

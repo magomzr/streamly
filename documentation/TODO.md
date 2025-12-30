@@ -24,7 +24,6 @@
 
 ### New Steps
 
-- [ ] Send email step (SMTP/SendGrid)
 - [ ] SQL query step (PostgreSQL/MySQL)
 - [ ] Slack notification step
 - [ ] Math operations step
@@ -70,11 +69,12 @@
 
 ## Ideas / Future
 
-- [x] Scheduled flow execution (cron)
 - [ ] Visual flow diff for versioning
 - [ ] Flow marketplace/sharing
 - [ ] AI-powered step suggestions
 - [ ] Flow analytics dashboard
 - [ ] Mobile app for monitoring
-- [ ] Scheduled flow execution (cron)
 - [ ] Flow triggers (webhooks, events)
+- [ ] Step output preview in node
+- [ ] Collaborative editing (multiple users)
+- [ ] Flow import/export improvements (YAML support)
