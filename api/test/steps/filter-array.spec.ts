@@ -151,4 +151,135 @@ describe('FilterArrayStep', () => {
     expect(ctx.logs).toHaveLength(1);
     expect(ctx.logs[0]).toContain('Filtering array');
   });
+
+  it('should filter by boolean true', async () => {
+    const settings = {
+      array: [
+        { id: 1, completed: true },
+        { id: 2, completed: false },
+        { id: 3, completed: true },
+      ],
+      field: 'completed',
+      operator: '===',
+      value: 'true',
+      valueType: 'boolean',
+    };
+
+    const result = await step.run(ctx, settings);
+
+    expect(result.filtered).toHaveLength(2);
+    expect(result.filtered[0].id).toBe(1);
+    expect(result.filtered[1].id).toBe(3);
+  });
+
+  it('should filter by boolean false', async () => {
+    const settings = {
+      array: [
+        { id: 1, completed: true },
+        { id: 2, completed: false },
+      ],
+      field: 'completed',
+      operator: '===',
+      value: 'false',
+      valueType: 'boolean',
+    };
+
+    const result = await step.run(ctx, settings);
+
+    expect(result.filtered).toHaveLength(1);
+    expect(result.filtered[0].id).toBe(2);
+  });
+
+  it('should filter with contains operator on string', async () => {
+    const settings = {
+      array: [
+        { id: 1, email: 'john@example.com' },
+        { id: 2, email: 'jane@test.com' },
+        { id: 3, email: 'bob@example.com' },
+      ],
+      field: 'email',
+      operator: 'contains',
+      value: 'example',
+    };
+
+    const result = await step.run(ctx, settings);
+
+    expect(result.filtered).toHaveLength(2);
+    expect(result.filtered[0].id).toBe(1);
+    expect(result.filtered[1].id).toBe(3);
+  });
+
+  it('should filter with contains operator on array', async () => {
+    const settings = {
+      array: [
+        { id: 1, tags: ['javascript', 'react'] },
+        { id: 2, tags: ['python', 'django'] },
+        { id: 3, tags: ['javascript', 'vue'] },
+      ],
+      field: 'tags',
+      operator: 'contains',
+      value: 'javascript',
+    };
+
+    const result = await step.run(ctx, settings);
+
+    expect(result.filtered).toHaveLength(2);
+    expect(result.filtered[0].id).toBe(1);
+    expect(result.filtered[1].id).toBe(3);
+  });
+
+  it('should parse number strings correctly', async () => {
+    const settings = {
+      array: [
+        { id: 1, age: 25 },
+        { id: 2, age: 30 },
+        { id: 3, age: 35 },
+      ],
+      field: 'age',
+      operator: '>',
+      value: '28',
+      valueType: 'number',
+    };
+
+    const result = await step.run(ctx, settings);
+
+    expect(result.filtered).toHaveLength(2);
+  });
+
+  it('should handle null values', async () => {
+    const settings = {
+      array: [
+        { id: 1, value: null },
+        { id: 2, value: 'test' },
+      ],
+      field: 'value',
+      operator: '===',
+      value: 'null',
+      valueType: 'null',
+    };
+
+    const result = await step.run(ctx, settings);
+
+    expect(result.filtered).toHaveLength(1);
+    expect(result.filtered[0].id).toBe(1);
+  });
+
+  it('should compare string "true" when valueType is string', async () => {
+    const settings = {
+      array: [
+        { id: 1, status: 'true' },
+        { id: 2, status: 'false' },
+        { id: 3, status: true },
+      ],
+      field: 'status',
+      operator: '===',
+      value: 'true',
+      valueType: 'string',
+    };
+
+    const result = await step.run(ctx, settings);
+
+    expect(result.filtered).toHaveLength(1);
+    expect(result.filtered[0].id).toBe(1);
+  });
 });

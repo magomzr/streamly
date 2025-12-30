@@ -82,4 +82,12 @@ export class SchedulerService implements OnModuleInit {
   getScheduledFlows() {
     return Array.from(this.scheduledJobs.keys());
   }
+
+  getScheduledFlowsDetails() {
+    const flows = Array.from(this.scheduledJobs.keys());
+    return flows.map((flowId) => ({
+      flowId,
+      isRunning: this.scheduledJobs.has(flowId),
+    }));
+  }
 }

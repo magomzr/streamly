@@ -4,7 +4,7 @@ import { createStepLog } from 'src/utils';
 
 @Injectable()
 export class JsonMinifierStep implements IStepExecutor {
-  static stepType = 'json_minifier';
+  static readonly stepType = 'json_minifier';
 
   async run(ctx: IContext, settings: any): Promise<any> {
     const { jsonString } = settings;

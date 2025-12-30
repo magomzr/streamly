@@ -114,6 +114,27 @@ export class FlowController {
     return this.flowService.findScheduled();
   }
 
+  @Get('scheduled/active')
+  async getActiveScheduledFlows() {
+    const activeFlowIds = this.schedulerService.getScheduledFlows();
+    const allScheduled = await this.flowService.findScheduled();
+
+    return allScheduled.map((flow) => ({
+      id: flow.id,
+      name: flow.name,
+      cronExpression: flow.cronExpression,
+      enabled: flow.enabled,
+      isActive: activeFlowIds.includes(flow.id),
+    }));
+  }
+
+  @Get('scheduled/count')
+  async getActiveCount() {
+    const activeFlowIds = this.schedulerService.getScheduledFlows();
+    return { active: activeFlowIds.length };
+  }
+
+  @Post(':id/enable')
   async enableFlow(@Param('id') id: string) {
     const flow = await this.flowService.findOne(id);
     if (!flow) throw new Error('Flow not found');

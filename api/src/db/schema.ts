@@ -27,3 +27,11 @@ export const executions = pgTable('executions', {
   triggeredBy: text('triggered_by').notNull().default('http'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
+
+export const secrets = pgTable('secrets', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull().unique(),
+  encryptedValue: text('encrypted_value').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});

@@ -2,6 +2,7 @@ export type StepType =
   | 'conditional'
   | 'http_request'
   | 'send_sms'
+  | 'send_email'
   | 'json_minifier'
   | 'delay'
   | 'transform_data'

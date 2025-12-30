@@ -1,8 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { type StepType } from '@streamly/shared';
 import { useFlowStore } from '../stores/flow';
 import { CategoryAccordion } from './CategoryAccordion';
+import { ActiveFlowsMonitor } from './ActiveFlowsMonitor';
 import { Spinner } from './Spinner';
+import { Logo } from './Logo';
 import { STEP_CATEGORIES } from '@streamly/shared';
 
 interface SidebarProps {
@@ -14,10 +16,16 @@ interface SidebarProps {
 export function Sidebar({ onLoadFlow, onNewFlow, isDark }: SidebarProps) {
   const { flows, currentFlowId, isLoading, loadFlows, deleteFlow } =
     useFlowStore();
+  const [refreshMonitor, setRefreshMonitor] = useState(0);
 
   useEffect(() => {
     loadFlows();
   }, [loadFlows]);
+
+  // Trigger refresh when flows change
+  useEffect(() => {
+    setRefreshMonitor((prev) => prev + 1);
+  }, [flows]);
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -45,6 +53,9 @@ export function Sidebar({ onLoadFlow, onNewFlow, isDark }: SidebarProps) {
         flexDirection: 'column',
       }}
     >
+      <Logo />
+      <ActiveFlowsMonitor isDark={isDark} refreshTrigger={refreshMonitor} />
+
       <div
         style={{
           padding: '16px',

@@ -4,7 +4,7 @@ import { createStepLog } from '../../../utils/logger';
 
 @Injectable()
 export class Base64DecodeStep implements IStepExecutor {
-  static stepType = 'base64_decode';
+  static readonly stepType = 'base64_decode';
 
   async run(ctx: IContext, settings: any): Promise<any> {
     const { encoded } = settings;

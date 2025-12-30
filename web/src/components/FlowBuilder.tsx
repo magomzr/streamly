@@ -20,8 +20,7 @@ import { NodeConfigPanel } from './NodeConfigPanel.js';
 import { Sidebar } from './Sidebar.js';
 import { ExecutionView } from './ExecutionView.js';
 import { ExecutionHistory } from './ExecutionHistory.js';
-import { VarsEditor } from './VarsEditor.js';
-import { TriggerConfig } from './TriggerConfig.js';
+import { OptionsPanel } from './OptionsPanel.js';
 import type { StepData, StepType } from '../types.js';
 import { STEP_LABELS, type IFlow, type ITriggerConfig } from '@streamly/shared';
 import { apiService } from '../services/api.js';
@@ -54,12 +53,11 @@ function FlowBuilderInner() {
   });
   const [vars, setVars] = useState<Record<string, any>>({});
   const [showExecution, setShowExecution] = useState(false);
-  const [showVarsEditor, setShowVarsEditor] = useState(false);
-  const [showTriggerConfig, setShowTriggerConfig] = useState(false);
+  const [showOptionsPanel, setShowOptionsPanel] = useState(false);
   const [showExecutionHistory, setShowExecutionHistory] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
-  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
+
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [showValidation, setShowValidation] = useState(false);
   const [copiedNodes, setCopiedNodes] = useState<Node<StepData>[]>([]);
@@ -352,7 +350,7 @@ function FlowBuilderInner() {
       setEdges(layoutedEdges);
       setCurrentFlowId(flowId);
       setHasUnsavedChanges(false);
-      setShowTriggerConfig(false);
+      setShowOptionsPanel(false);
       setShowExecutionHistory(false);
       setTimeout(() => fitView({ duration: 200 }), 0);
     },
@@ -631,13 +629,13 @@ function FlowBuilderInner() {
         style={{
           position: 'absolute',
           top: '20px',
-          right: '20px',
+          left: '280px',
           zIndex: 10,
         }}
       >
-        {!showTriggerConfig ? (
+        {!showOptionsPanel ? (
           <button
-            onClick={() => setShowTriggerConfig(true)}
+            onClick={() => setShowOptionsPanel(true)}
             style={{
               padding: '8px 16px',
               backgroundColor: isDark ? '#374151' : 'white',
@@ -652,19 +650,19 @@ function FlowBuilderInner() {
                 : '0 2px 8px rgba(0,0,0,0.1)',
             }}
           >
-            ⚙️ Trigger
+            ⚙️ Options
           </button>
         ) : (
-          <div style={{ width: '320px' }}>
+          <div>
             <div
               style={{
                 display: 'flex',
-                justifyContent: 'flex-end',
+                justifyContent: 'flex-start',
                 marginBottom: '8px',
               }}
             >
               <button
-                onClick={() => setShowTriggerConfig(false)}
+                onClick={() => setShowOptionsPanel(false)}
                 style={{
                   padding: '4px 8px',
                   backgroundColor: isDark ? '#374151' : 'white',
@@ -678,13 +676,37 @@ function FlowBuilderInner() {
                 ✕
               </button>
             </div>
-            <TriggerConfig
+            <OptionsPanel
               trigger={trigger}
-              onChange={(newTrigger) => {
+              onTriggerChange={(newTrigger) => {
                 setTrigger(newTrigger);
                 setHasUnsavedChanges(true);
               }}
+              vars={vars}
+              onVarsChange={(newVars) => {
+                setVars(newVars);
+                setHasUnsavedChanges(true);
+              }}
+              onAutoLayout={() => {
+                handleAutoLayout();
+                setShowOptionsPanel(false);
+              }}
+              onValidate={() => {
+                handleValidate();
+                setShowOptionsPanel(false);
+              }}
+              onExport={() => {
+                handleExportJSON();
+                setShowOptionsPanel(false);
+              }}
+              onImport={() => {
+                handleImportJSON();
+                setShowOptionsPanel(false);
+              }}
               isDark={isDark}
+              onToggleTheme={() => {
+                toggleTheme();
+              }}
             />
           </div>
         )}
@@ -763,176 +785,6 @@ function FlowBuilderInner() {
           {hasUnsavedChanges && <span style={{ color: '#f59e0b' }}>•</span>}
         </div>
 
-        <div style={{ position: 'relative' }}>
-          <button
-            onClick={() => setShowOptionsMenu(!showOptionsMenu)}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: 'white',
-              color: '#6b7280',
-              border: '1px solid #e5e7eb',
-              borderRadius: '6px',
-              fontSize: '14px',
-              fontWeight: 500,
-              cursor: 'pointer',
-            }}
-          >
-            Options ▾
-          </button>
-
-          {showOptionsMenu && (
-            <>
-              <div
-                style={{
-                  position: 'fixed',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  zIndex: 999,
-                }}
-                onClick={() => setShowOptionsMenu(false)}
-              />
-              <div
-                style={{
-                  position: 'absolute',
-                  bottom: '100%',
-                  left: 0,
-                  marginBottom: '8px',
-                  backgroundColor: 'white',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '6px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                  minWidth: '160px',
-                  zIndex: 1000,
-                }}
-              >
-                <button
-                  onClick={() => {
-                    handleAutoLayout();
-                    setShowOptionsMenu(false);
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '10px 16px',
-                    border: 'none',
-                    background: 'none',
-                    textAlign: 'left',
-                    fontSize: '14px',
-                    cursor: 'pointer',
-                    color: '#374151',
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.backgroundColor = '#f3f4f6')
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.backgroundColor = 'transparent')
-                  }
-                >
-                  Auto Layout
-                </button>
-                <button
-                  onClick={() => {
-                    handleValidate();
-                    setShowOptionsMenu(false);
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '10px 16px',
-                    border: 'none',
-                    background: 'none',
-                    textAlign: 'left',
-                    fontSize: '14px',
-                    cursor: 'pointer',
-                    color: '#374151',
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.backgroundColor = '#f3f4f6')
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.backgroundColor = 'transparent')
-                  }
-                >
-                  ✓ Validate Flow
-                </button>
-                <button
-                  onClick={() => {
-                    toggleTheme();
-                    setShowOptionsMenu(false);
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '10px 16px',
-                    border: 'none',
-                    background: 'none',
-                    textAlign: 'left',
-                    fontSize: '14px',
-                    cursor: 'pointer',
-                    color: '#374151',
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.backgroundColor = '#f3f4f6')
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.backgroundColor = 'transparent')
-                  }
-                >
-                  {isDark ? '☀️' : '☽️'} {isDark ? 'Light' : 'Dark'} Mode
-                </button>
-                <button
-                  onClick={() => {
-                    handleExportJSON();
-                    setShowOptionsMenu(false);
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '10px 16px',
-                    border: 'none',
-                    background: 'none',
-                    textAlign: 'left',
-                    fontSize: '14px',
-                    cursor: 'pointer',
-                    color: '#374151',
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.backgroundColor = '#f3f4f6')
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.backgroundColor = 'transparent')
-                  }
-                >
-                  ↓ Export JSON
-                </button>
-                <button
-                  onClick={() => {
-                    handleImportJSON();
-                    setShowOptionsMenu(false);
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '10px 16px',
-                    border: 'none',
-                    background: 'none',
-                    textAlign: 'left',
-                    fontSize: '14px',
-                    cursor: 'pointer',
-                    color: '#374151',
-                    borderRadius: '0 0 6px 6px',
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.backgroundColor = '#f3f4f6')
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.backgroundColor = 'transparent')
-                  }
-                >
-                  ↑ Import JSON
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-
         <button
           onClick={handleSave}
           disabled={isSaving}
@@ -967,23 +819,6 @@ function FlowBuilderInner() {
           {isExecuting ? 'Executing...' : '▶ Run Flow'}
         </button>
 
-        <button
-          onClick={() => setShowVarsEditor(true)}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: 'white',
-            color: '#6b7280',
-            border: '1px solid #e5e7eb',
-            borderRadius: '6px',
-            fontSize: '14px',
-            fontWeight: 500,
-            cursor: 'pointer',
-          }}
-        >
-          Variables{' '}
-          {Object.keys(vars).length > 0 && `(${Object.keys(vars).length})`}
-        </button>
-
         {currentFlowId && (
           <button
             onClick={() => setShowExecutionHistory(true)}
@@ -1002,17 +837,6 @@ function FlowBuilderInner() {
           </button>
         )}
       </div>
-
-      {showVarsEditor && (
-        <VarsEditor
-          vars={vars}
-          onChange={(newVars: Record<string, any>) => {
-            setVars(newVars);
-            setShowVarsEditor(false);
-          }}
-          onClose={() => setShowVarsEditor(false)}
-        />
-      )}
 
       {showExecution && (
         <ExecutionView onClose={() => setShowExecution(false)} />

@@ -2,14 +2,14 @@ import { Executor } from '../../src/engine/executor';
 import { IStepRegistry, IContext, IFlow, IStepExecutor } from '../../src/types';
 
 class MockStep implements IStepExecutor {
-  static stepType = 'mock_step';
+  static readonly stepType = 'mock_step';
   async run(ctx: IContext, settings: any): Promise<any> {
     return { result: 'success', input: settings };
   }
 }
 
 class FailingStep implements IStepExecutor {
-  static stepType = 'failing_step';
+  static readonly stepType = 'failing_step';
   async run(): Promise<any> {
     throw new Error('Step failed');
   }
@@ -107,7 +107,7 @@ describe('Executor', () => {
   it('should retry failed steps', async () => {
     let attemptCount = 0;
     class RetryStep implements IStepExecutor {
-      static stepType = 'retry_step';
+      static readonly stepType = 'retry_step';
       async run(): Promise<any> {
         attemptCount++;
         if (attemptCount < 3) {
@@ -165,7 +165,7 @@ describe('Executor', () => {
 
   it('should handle array output from step', async () => {
     class ArrayStep implements IStepExecutor {
-      static stepType = 'array_step';
+      static readonly stepType = 'array_step';
       async run(): Promise<any> {
         return [1, 2, 3];
       }
@@ -197,7 +197,7 @@ describe('Executor', () => {
 
   it('should handle primitive output from step', async () => {
     class PrimitiveStep implements IStepExecutor {
-      static stepType = 'primitive_step';
+      static readonly stepType = 'primitive_step';
       async run(): Promise<any> {
         return 42;
       }

@@ -7,6 +7,7 @@ export const STEP_LABELS: Record<StepType, string> = {
   extract_text: 'Extract Text',
   http_request: 'HTTP Request',
   send_sms: 'Send SMS',
+  send_email: 'Send Email',
   json_minifier: 'Minify JSON',
   delay: 'Delay',
   transform_data: 'Transform Data',

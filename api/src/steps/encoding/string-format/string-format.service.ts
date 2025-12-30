@@ -4,7 +4,7 @@ import { createStepLog } from '../../../utils/logger';
 
 @Injectable()
 export class StringFormatStep implements IStepExecutor {
-  static stepType = 'string_format';
+  static readonly stepType = 'string_format';
 
   async run(ctx: IContext, settings: any): Promise<any> {
     const { text, operation = 'trim' } = settings;

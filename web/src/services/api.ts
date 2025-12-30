@@ -134,9 +134,55 @@ export const apiService = {
     return response.json();
   },
 
+  async getActiveScheduledFlows(): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL}/flows/scheduled/active`);
+    if (!response.ok) throw new Error('Failed to fetch active scheduled flows');
+    return response.json();
+  },
+
+  async getActiveFlowsCount(): Promise<{ active: number }> {
+    const response = await fetch(`${API_BASE_URL}/flows/scheduled/count`);
+    if (!response.ok) throw new Error('Failed to fetch active flows count');
+    return response.json();
+  },
+
   async getExecutions(flowId: string): Promise<any[]> {
     const response = await fetch(`${API_BASE_URL}/flows/${flowId}/executions`);
     if (!response.ok) throw new Error('Failed to fetch executions');
     return response.json();
+  },
+
+  // Secrets
+  async getSecrets(): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL}/secrets`);
+    if (!response.ok) throw new Error('Failed to fetch secrets');
+    return response.json();
+  },
+
+  async createSecret(name: string, value: string): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/secrets`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, value }),
+    });
+    if (!response.ok) throw new Error('Failed to create secret');
+    return response.json();
+  },
+
+  async updateSecret(name: string, value: string): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/secrets/${name}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ value }),
+    });
+    if (!response.ok) throw new Error('Failed to update secret');
+    return response.json();
+  },
+
+  async deleteSecret(name: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/secrets/${name}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) throw new Error('Failed to delete secret');
   },
 };

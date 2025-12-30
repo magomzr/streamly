@@ -133,7 +133,7 @@ import { createStepLog } from '../../../utils/logger';
 
 @Injectable()
 export class YourNewStep implements IStepExecutor {
-  static stepType = 'your_new_step';
+  static readonly stepType = 'your_new_step';
 
   async run(ctx: IContext, settings: any): Promise<any> {
     const { fieldName } = settings;
@@ -209,6 +209,7 @@ pnpm dev
 - [Shared Package](./shared/README.md)
 - [Web Documentation](./web/README.md)
 - [Cron Triggers - Scheduled Execution](./documentation/CRON_TRIGGERS.md)
+- [Secrets Management - Secure Credentials](./documentation/SECRETS_MANAGEMENT.md)
 - [Architecture](./documentation/)
 - [Roadmap and TODO](./documentation/TODO.md)
 

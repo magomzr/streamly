@@ -5,7 +5,7 @@ import { createStepLog } from '../../../utils/logger';
 
 @Injectable()
 export class HtmlParserStep implements IStepExecutor {
-  static stepType = 'html_parser';
+  static readonly stepType = 'html_parser';
 
   async run(ctx: IContext, settings: any): Promise<any> {
     const { html, selector, attribute } = settings;
