@@ -86,9 +86,28 @@ export const STEP_SCHEMAS: Record<StepType, FieldSchema[]> = {
         { value: 'GET', label: 'GET' },
         { value: 'POST', label: 'POST' },
         { value: 'PUT', label: 'PUT' },
+        { value: 'PATCH', label: 'PATCH' },
         { value: 'DELETE', label: 'DELETE' },
       ],
       defaultValue: 'GET',
+    },
+    {
+      name: 'headers',
+      label: 'Headers (JSON)',
+      type: 'textarea',
+      placeholder: '{"Content-Type": "application/json"}',
+    },
+    {
+      name: 'bearerToken',
+      label: 'Bearer Token',
+      type: 'text',
+      placeholder: '{{secret.API_TOKEN}} or your-token-here',
+    },
+    {
+      name: 'body',
+      label: 'Body (JSON)',
+      type: 'textarea',
+      placeholder: '{"key": "value"}',
     },
   ],
 
