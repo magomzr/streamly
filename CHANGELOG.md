@@ -1,3 +1,6 @@
+## 0.0.9
+- Add more options in the HTTP request settings (#44)
+
 ## 0.0.8
 - Implement send_email step with Gmail (#38)
 - Add a section for flows that are running in the background (#40)
