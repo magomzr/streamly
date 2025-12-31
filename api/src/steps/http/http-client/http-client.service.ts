@@ -7,7 +7,14 @@ export class HttpClientStep implements IStepExecutor {
   static readonly stepType = 'http_request';
 
   async run(ctx: IContext, settings: any): Promise<any> {
-    const { url, method = 'GET', headers, bearerToken, body } = settings;
+    const {
+      url,
+      method = 'GET',
+      headers,
+      bearerToken,
+      body,
+      timeout = 30000,
+    } = settings;
 
     const fetchOptions: RequestInit = { method };
 
@@ -36,17 +43,29 @@ export class HttpClientStep implements IStepExecutor {
       }
     }
 
+    const controller = new AbortController();
+    fetchOptions.signal = controller.signal;
+    setTimeout(() => controller.abort(), timeout);
+
     ctx.logs.push(
       createStepLog('INFO', HttpClientStep.name, `${method} request to ${url}`),
     );
 
     const res = await fetch(url, fetchOptions);
-    const contentType = res.headers.get('content-type');
 
-    if (contentType?.includes('application/json')) {
-      return await res.json();
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: ${res.statusText}`);
     }
 
-    return await res.text();
+    const contentType = res.headers.get('content-type');
+    const data = contentType?.includes('application/json')
+      ? await res.json()
+      : await res.text();
+
+    return {
+      status: res.status,
+      headers: Object.fromEntries(res.headers.entries()),
+      data,
+    };
   }
 }

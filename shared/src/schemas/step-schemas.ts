@@ -109,31 +109,33 @@ export const STEP_SCHEMAS: Record<StepType, FieldSchema[]> = {
       type: 'textarea',
       placeholder: '{"key": "value"}',
     },
-  ],
-
-  webhook: [
     {
-      name: 'url',
-      label: 'Webhook URL',
-      type: 'text',
-      placeholder: 'https://webhook.site/...',
-      required: true,
-    },
-    {
-      name: 'payload',
-      label: 'Payload (JSON)',
-      type: 'textarea',
-      placeholder: '{"key": "value"}',
+      name: 'timeout',
+      label: 'Timeout (ms)',
+      type: 'number',
+      placeholder: '30000',
+      defaultValue: 30000,
     },
   ],
 
-  send_sms: [
+  log_message: [
     {
       name: 'message',
       label: 'Message',
       type: 'textarea',
-      placeholder: 'Your message here...',
+      placeholder: 'Your log message here...',
       required: true,
+    },
+    {
+      name: 'level',
+      label: 'Log Level',
+      type: 'select',
+      options: [
+        { value: 'INFO', label: 'Info' },
+        { value: 'WARN', label: 'Warning' },
+        { value: 'ERROR', label: 'Error' },
+      ],
+      defaultValue: 'INFO',
     },
   ],
 

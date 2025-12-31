@@ -1,7 +1,10 @@
 ## 0.0.9
+
 - Add more options in the HTTP request settings (#44)
+- Remove redundant webhook step and rename send_sms to log_message step (#45)
 
 ## 0.0.8
+
 - Implement send_email step with Gmail (#38)
 - Add a section for flows that are running in the background (#40)
 - Move the Options button to a different location and include the Streamly logo (#41)
