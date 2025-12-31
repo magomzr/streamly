@@ -1,4 +1,3 @@
-import { generateUUID } from '../utils';
 import type { IFlow } from '@streamly/shared';
 
 export const vars = {
@@ -9,7 +8,7 @@ export const sampleFlow: IFlow = {
   name: 'Simple Flow',
   steps: [
     {
-      id: generateUUID(),
+      id: 'step-1',
       type: 'http_request',
       name: 'fetchTodo',
       settings: { url: 'https://jsonplaceholder.typicode.com/todos/1' },
@@ -18,15 +17,21 @@ export const sampleFlow: IFlow = {
       },
     },
     {
-      id: generateUUID(),
+      id: 'step-2',
       type: 'log_message',
       name: 'logMessageStep',
       settings: {
-        message: 'Fetched title: {{steps.fetchTodo.title}}',
+        message: 'Fetched title: {{steps.fetchTodo.data.title}}',
       },
       retry: {
         maxAttempts: 2,
       },
+    },
+  ],
+  edges: [
+    {
+      source: 'step-1',
+      target: 'step-2',
     },
   ],
 };
@@ -35,7 +40,7 @@ export const failingFlow: IFlow = {
   name: 'Failing Flow',
   steps: [
     {
-      id: generateUUID(),
+      id: 'fail-step-1',
       type: 'http_request',
       name: 'fetchInvalidUrl',
       settings: { url: 'https://this-url-does-not-exist-12345.com/api' },
@@ -44,7 +49,7 @@ export const failingFlow: IFlow = {
       },
     },
     {
-      id: generateUUID(),
+      id: 'fail-step-2',
       type: 'json_minifier',
       name: 'minifyJson',
       settings: {
@@ -52,7 +57,7 @@ export const failingFlow: IFlow = {
       },
     },
     {
-      id: generateUUID(),
+      id: 'fail-step-3',
       type: 'log_message',
       name: 'neverLogMessageStep',
       settings: {
@@ -60,32 +65,48 @@ export const failingFlow: IFlow = {
       },
     },
   ],
+  edges: [
+    {
+      source: 'fail-step-1',
+      target: 'fail-step-2',
+    },
+    {
+      source: 'fail-step-2',
+      target: 'fail-step-3',
+    },
+  ],
 };
 
 export const complexFlow: IFlow = {
-  name: 'Complex Flow - All Steps',
+  name: 'Streamly flow',
   steps: [
     {
-      id: generateUUID(),
-      type: 'http_request',
+      id: 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d',
       name: 'fetchTodos',
-      settings: { url: 'https://jsonplaceholder.typicode.com/todos' },
-    },
-    {
-      id: generateUUID(),
-      type: 'filter_array',
-      name: 'filterCompleted',
+      label: 'fetchTodos',
+      type: 'http_request',
       settings: {
-        array: '{{steps.fetchTodos}}',
-        field: 'completed',
-        operator: '===',
-        value: true,
+        url: 'https://jsonplaceholder.typicode.com/todos',
       },
     },
     {
-      id: generateUUID(),
-      type: 'sort_array',
+      id: 'b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e',
+      name: 'filterCompleted',
+      label: 'filterCompleted',
+      type: 'filter_array',
+      settings: {
+        array: '{{steps.fetchTodos.data}}',
+        field: 'completed',
+        value: true,
+        operator: '===',
+        valueType: 'boolean',
+      },
+    },
+    {
+      id: 'c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f',
       name: 'sortByUserId',
+      label: 'sortByUserId',
+      type: 'sort_array',
       settings: {
         array: '{{steps.filterCompleted.filtered}}',
         field: 'userId',
@@ -93,70 +114,127 @@ export const complexFlow: IFlow = {
       },
     },
     {
-      id: generateUUID(),
-      type: 'json_minifier',
+      id: 'd4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a',
       name: 'minifyTodos',
+      label: 'minifyTodos',
+      type: 'json_minifier',
       settings: {
         jsonString: '{{steps.sortByUserId.sorted}}',
       },
     },
     {
-      id: generateUUID(),
-      type: 'delay',
+      id: 'e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8a9b',
       name: 'waitBeforeUser',
-      settings: { milliseconds: 1000 },
+      label: 'waitBeforeUser',
+      type: 'delay',
+      settings: {
+        milliseconds: 1000,
+      },
     },
     {
-      id: generateUUID(),
-      type: 'http_request',
+      id: 'f6a7b8c9-d0e1-4f2a-3b4c-5d6e7f8a9b0c',
       name: 'fetchUser',
-      settings: { url: 'https://jsonplaceholder.typicode.com/users/1' },
+      label: 'fetchUser',
+      type: 'http_request',
+      settings: {
+        url: 'https://jsonplaceholder.typicode.com/users/1',
+      },
     },
     {
-      id: generateUUID(),
-      type: 'string_format',
+      id: 'a7b8c9d0-e1f2-4a3b-4c5d-6e7f8a9b0c1d',
       name: 'formatUserName',
+      label: 'formatUserName',
+      type: 'string_format',
       settings: {
         text: '{{steps.fetchUser.name}}',
         operation: 'uppercase',
       },
     },
     {
-      id: generateUUID(),
-      type: 'transform_data',
+      id: 'b8c9d0e1-f2a3-4b4c-5d6e-7f8a9b0c1d2e',
       name: 'transformUser',
+      label: 'transformUser',
+      type: 'transform_data',
       settings: {
         mapping: {
+          email: '{{steps.fetchUser.email}}',
           userId: '{{steps.fetchUser.id}}',
           fullName: '{{steps.formatUserName.formatted}}',
-          email: '{{steps.fetchUser.email}}',
         },
       },
     },
     {
-      id: generateUUID(),
-      type: 'base64_encode',
+      id: 'c9d0e1f2-a3b4-4c5d-6e7f-8a9b0c1d2e3f',
       name: 'encodeEmail',
+      label: 'encodeEmail',
+      type: 'base64_encode',
       settings: {
         text: '{{steps.transformUser.email}}',
       },
     },
     {
-      id: generateUUID(),
-      type: 'base64_decode',
+      id: 'd0e1f2a3-b4c5-4d6e-7f8a-9b0c1d2e3f4a',
       name: 'decodeEmail',
+      label: 'decodeEmail',
+      type: 'base64_decode',
       settings: {
         encoded: '{{steps.encodeEmail.encoded}}',
       },
     },
     {
-      id: generateUUID(),
+      id: '4e4d652a-cfbd-4427-b928-1589792cd076',
+      name: 'log_message',
+      label: 'Log summary',
       type: 'log_message',
-      name: 'logSummary',
       settings: {
-        message:
-          'Completed: {{steps.filterCompleted.count}}, User: {{steps.transformUser.fullName}}',
+        message: 'Show summary',
       },
     },
   ],
+  edges: [
+    {
+      source: 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d',
+      target: 'b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e',
+    },
+    {
+      source: 'b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e',
+      target: 'c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f',
+    },
+    {
+      source: 'c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f',
+      target: 'd4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a',
+    },
+    {
+      source: 'd4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a',
+      target: 'e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8a9b',
+    },
+    {
+      source: 'e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8a9b',
+      target: 'f6a7b8c9-d0e1-4f2a-3b4c-5d6e7f8a9b0c',
+    },
+    {
+      source: 'f6a7b8c9-d0e1-4f2a-3b4c-5d6e7f8a9b0c',
+      target: 'a7b8c9d0-e1f2-4a3b-4c5d-6e7f8a9b0c1d',
+    },
+    {
+      source: 'a7b8c9d0-e1f2-4a3b-4c5d-6e7f8a9b0c1d',
+      target: 'b8c9d0e1-f2a3-4b4c-5d6e-7f8a9b0c1d2e',
+    },
+    {
+      source: 'b8c9d0e1-f2a3-4b4c-5d6e-7f8a9b0c1d2e',
+      target: 'c9d0e1f2-a3b4-4c5d-6e7f-8a9b0c1d2e3f',
+    },
+    {
+      source: 'c9d0e1f2-a3b4-4c5d-6e7f-8a9b0c1d2e3f',
+      target: 'd0e1f2a3-b4c5-4d6e-7f8a-9b0c1d2e3f4a',
+    },
+    {
+      source: 'd0e1f2a3-b4c5-4d6e-7f8a-9b0c1d2e3f4a',
+      target: '4e4d652a-cfbd-4427-b928-1589792cd076',
+    },
+  ],
+  trigger: {
+    type: 'http',
+    enabled: false,
+  },
 };
