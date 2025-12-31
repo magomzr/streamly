@@ -1,5 +1,6 @@
 ## 0.0.9
 - Add more options in the HTTP request settings (#44)
+- Remove redundant webhook step and rename send_sms to log_message step (#45)
 
 ## 0.0.8
 - Implement send_email step with Gmail (#38)
