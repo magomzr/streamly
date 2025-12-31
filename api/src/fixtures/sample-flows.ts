@@ -19,8 +19,8 @@ export const sampleFlow: IFlow = {
     },
     {
       id: generateUUID(),
-      type: 'send_sms',
-      name: 'sendSmsStep',
+      type: 'log_message',
+      name: 'logMessageStep',
       settings: {
         message: 'Fetched title: {{steps.fetchTodo.title}}',
       },
@@ -53,8 +53,8 @@ export const failingFlow: IFlow = {
     },
     {
       id: generateUUID(),
-      type: 'send_sms',
-      name: 'sendSmsStep',
+      type: 'log_message',
+      name: 'neverLogMessageStep',
       settings: {
         message: 'This should never execute',
       },
@@ -151,20 +151,8 @@ export const complexFlow: IFlow = {
     },
     {
       id: generateUUID(),
-      type: 'webhook',
-      name: 'sendWebhook',
-      settings: {
-        url: 'https://jsonplaceholder.typicode.com/posts',
-        payload: {
-          completedCount: '{{steps.filterCompleted.count}}',
-          user: '{{steps.transformUser.fullName}}',
-        },
-      },
-    },
-    {
-      id: generateUUID(),
-      type: 'send_sms',
-      name: 'sendSummary',
+      type: 'log_message',
+      name: 'logSummary',
       settings: {
         message:
           'Completed: {{steps.filterCompleted.count}}, User: {{steps.transformUser.fullName}}',
