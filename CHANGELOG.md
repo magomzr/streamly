@@ -2,6 +2,7 @@
 
 - Add more options in the HTTP request settings (#44)
 - Remove redundant webhook step and rename send_sms to log_message step (#45)
+- Include real-time execution progress indicators (#47)
 
 ## 0.0.8
 

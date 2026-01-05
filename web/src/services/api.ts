@@ -97,6 +97,43 @@ export const apiService = {
     return response.json();
   },
 
+  executeFlowByIdStream(
+    id: string,
+    vars: Record<string, any> = {},
+    onProgress: (event: any) => void,
+  ): Promise<void> {
+    return fetch(`${API_BASE_URL}/flows/${id}/execute/stream`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ vars }),
+    }).then(async (response) => {
+      if (!response.ok) throw new Error('Failed to execute flow');
+      if (!response.body) throw new Error('No response body');
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              onProgress(data);
+            } catch (err) {
+              console.error('Failed to parse SSE data:', err);
+            }
+          }
+        }
+      }
+    });
+  },
+
   async updateTrigger(
     id: string,
     type: string,

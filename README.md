@@ -210,6 +210,7 @@ pnpm dev
 - [Web Documentation](./web/README.md)
 - [Cron Triggers - Scheduled Execution](./documentation/CRON_TRIGGERS.md)
 - [Secrets Management - Secure Credentials](./documentation/SECRETS_MANAGEMENT.md)
+- [Real-time Progress - Live Execution Tracking](./documentation/REALTIME_PROGRESS.md)
 - [Architecture](./documentation/)
 - [Roadmap and TODO](./documentation/TODO.md)
 

@@ -7,12 +7,14 @@ import {
   Delete,
   Body,
   Param,
+  Res,
 } from '@nestjs/common';
 import { FlowService } from '../services/flow.service';
 import { ExecutionService } from '../services/execution.service';
 import { SchedulerService } from '../services/scheduler.service';
 import { EngineService } from '../engine/engine.service';
 import type { IFlow } from '@streamly/shared';
+import { Response } from 'express';
 
 @Controller('flows')
 export class FlowController {
@@ -60,6 +62,54 @@ export class FlowController {
   async delete(@Param('id') id: string) {
     await this.flowService.delete(id);
     return { deleted: true };
+  }
+
+  @Post(':id/execute/stream')
+  async executeWithProgress(
+    @Param('id') id: string,
+    @Body() body: { vars?: Record<string, any> },
+    @Res() res: Response,
+  ) {
+    const flow = await this.flowService.findOne(id);
+    if (!flow) {
+      res.status(404).json({ error: 'Flow not found' });
+      return;
+    }
+
+    // Set up SSE headers
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    // Subscribe to progress events
+    const subscription = this.engineService.getProgressObservable().subscribe({
+      next: (event) => {
+        res.write(`data: ${JSON.stringify(event)}\n\n`);
+      },
+      error: (error) => {
+        res.write(
+          `data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`,
+        );
+        res.end();
+      },
+    });
+
+    try {
+      const context = await this.engineService.runFlow(
+        flow.data,
+        body.vars || {},
+      );
+      await this.executionService.create(id, context);
+
+      res.write(`data: ${JSON.stringify({ type: 'complete', context })}\n\n`);
+    } catch (error) {
+      res.write(
+        `data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`,
+      );
+    } finally {
+      subscription.unsubscribe();
+      res.end();
+    }
   }
 
   @Post(':id/execute')

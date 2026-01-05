@@ -61,8 +61,14 @@ function FlowBuilderInner() {
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [showValidation, setShowValidation] = useState(false);
   const [copiedNodes, setCopiedNodes] = useState<Node<StepData>[]>([]);
-  const { isExecuting, setExecuting, setResult, setError } =
-    useExecutionStore();
+  const {
+    isExecuting,
+    setExecuting,
+    setResult,
+    setError,
+    setStepProgress,
+    clearProgress,
+  } = useExecutionStore();
   const {
     currentFlowId,
     flows,
@@ -388,6 +394,7 @@ function FlowBuilderInner() {
   const handleExecute = useCallback(async () => {
     setExecuting(true);
     setError(null);
+    clearProgress();
     setShowExecution(true);
 
     try {
@@ -405,11 +412,24 @@ function FlowBuilderInner() {
         }
       }
 
-      const result = await apiService.executeFlowById(flowId, vars);
-      setResult(result);
+      // Use SSE stream for real-time progress
+      await apiService.executeFlowByIdStream(flowId, vars, (event) => {
+        if (event.type === 'step_start') {
+          setStepProgress(event.stepId, 'running');
+        } else if (event.type === 'step_complete') {
+          setStepProgress(event.stepId, 'completed');
+        } else if (event.type === 'step_error') {
+          setStepProgress(event.stepId, 'error');
+        } else if (event.type === 'complete') {
+          setResult(event.context);
+          setExecuting(false);
+        } else if (event.type === 'error') {
+          setError(event.message);
+          setExecuting(false);
+        }
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
       setExecuting(false);
     }
   }, [
@@ -423,6 +443,8 @@ function FlowBuilderInner() {
     setExecuting,
     setResult,
     setError,
+    setStepProgress,
+    clearProgress,
   ]);
 
   const handleExportJSON = useCallback(() => {
