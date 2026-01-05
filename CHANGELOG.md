@@ -1,6 +1,7 @@
 ## 0.0.10
 
 - Update log window (#49)
+- Implement routing to load flows (#50)
 
 ## 0.0.9
 
