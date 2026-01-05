@@ -358,6 +358,7 @@ function FlowBuilderInner() {
       setHasUnsavedChanges(false);
       setShowOptionsPanel(false);
       setShowExecutionHistory(false);
+      setShowExecution(false);
       setTimeout(() => fitView({ duration: 200 }), 0);
     },
     [
@@ -378,6 +379,7 @@ function FlowBuilderInner() {
     setTrigger({ type: 'http', enabled: false });
     setCurrentFlowId(null);
     setHasUnsavedChanges(false);
+    setShowExecution(false);
   }, [setNodes, setEdges, setCurrentFlowId, setHasUnsavedChanges]);
 
   const handleAutoLayout = useCallback(() => {
@@ -617,8 +619,7 @@ function FlowBuilderInner() {
         style={{
           marginLeft: '260px',
           height: '100%',
-          marginBottom: showExecution ? '300px' : '0',
-          transition: 'margin-bottom 0.3s',
+          transition: 'margin-bottom 0.2s ease',
         }}
         onDrop={onDrop}
         onDragOver={onDragOver}
