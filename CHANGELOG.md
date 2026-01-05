@@ -1,3 +1,7 @@
+## 0.0.10
+
+- Update log window (#49)
+
 ## 0.0.9
 
 - Add more options in the HTTP request settings (#44)
