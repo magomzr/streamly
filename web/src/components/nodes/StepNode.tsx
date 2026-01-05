@@ -1,12 +1,16 @@
 import { memo } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import type { StepData } from '../../types.js';
+import { useExecutionStore } from '../../stores/execution.js';
 
 interface StepNodeProps extends NodeProps {
   data: StepData;
 }
 
 export const StepNode = memo(({ data, selected, id }: StepNodeProps) => {
+  const { stepProgress } = useExecutionStore();
+  const progress = stepProgress[id];
+
   const getNodeColor = (stepType: string) => {
     if (stepType === 'conditional') return '#ec4899';
     if (stepType.includes('http') || stepType === 'webhook') return '#3b82f6';
@@ -26,16 +30,32 @@ export const StepNode = memo(({ data, selected, id }: StepNodeProps) => {
 
   const color = getNodeColor(data.stepType);
 
+  const getStatusColor = () => {
+    if (!progress) return color;
+    switch (progress.status) {
+      case 'running':
+        return '#3b82f6';
+      case 'completed':
+        return '#10b981';
+      case 'error':
+        return '#ef4444';
+      default:
+        return color;
+    }
+  };
+
+  const statusColor = getStatusColor();
+
   return (
     <div
       style={{
         padding: '12px 20px',
         borderRadius: '8px',
-        border: `2px solid ${selected ? color : '#e5e7eb'}`,
-        backgroundColor: 'white',
+        border: `2px solid ${selected ? statusColor : '#e5e7eb'}`,
+        backgroundColor: progress?.status === 'running' ? '#eff6ff' : 'white',
         minWidth: '180px',
         boxShadow: selected
-          ? `0 0 0 2px ${color}40`
+          ? `0 0 0 2px ${statusColor}40`
           : '0 1px 3px rgba(0,0,0,0.1)',
         transition: 'all 0.2s',
         position: 'relative',
@@ -49,12 +69,31 @@ export const StepNode = memo(({ data, selected, id }: StepNodeProps) => {
             width: '8px',
             height: '8px',
             borderRadius: '50%',
-            backgroundColor: color,
+            backgroundColor: statusColor,
+            animation:
+              progress?.status === 'running' ? 'pulse 1.5s infinite' : 'none',
           }}
         />
         <div style={{ fontSize: '14px', fontWeight: 500, color: '#1f2937' }}>
           {data.label}
         </div>
+        {progress?.status === 'running' && (
+          <div
+            style={{
+              fontSize: '10px',
+              color: '#3b82f6',
+              fontWeight: 600,
+            }}
+          >
+            ⟳
+          </div>
+        )}
+        {progress?.status === 'completed' && (
+          <div style={{ fontSize: '12px', color: '#10b981' }}>✓</div>
+        )}
+        {progress?.status === 'error' && (
+          <div style={{ fontSize: '12px', color: '#ef4444' }}>✕</div>
+        )}
       </div>
 
       <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '4px' }}>

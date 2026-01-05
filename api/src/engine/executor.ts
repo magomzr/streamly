@@ -3,11 +3,14 @@ import { resolveTemplates } from '../utils/template-resolver';
 import { generateUUID } from '../utils/uuid';
 import { IStepRegistry, IContext, IFlow, IExecutor } from '../types';
 import { SecretsService } from '../services/secrets.service';
+import { Subject } from 'rxjs';
+import type { IProgressEvent } from '../types';
 
 export class Executor implements IExecutor {
   constructor(
     private readonly registry: IStepRegistry,
     private readonly secretsService?: SecretsService,
+    private readonly progress$?: Subject<IProgressEvent>,
   ) {}
 
   async run(flow: IFlow, vars: Record<string, any>): Promise<IContext> {
@@ -37,6 +40,10 @@ export class Executor implements IExecutor {
           `Flow ${flow.name} completed successfully.`,
         ),
       );
+      this.progress$?.next({
+        type: 'flow_complete',
+        timestamp: new Date(),
+      });
     } catch (error) {
       ctx.status = 'failed';
       ctx.completedAt = new Date();
@@ -47,6 +54,11 @@ export class Executor implements IExecutor {
           `Flow ${flow.name} failed: ${error.message}`,
         ),
       );
+      this.progress$?.next({
+        type: 'flow_error',
+        timestamp: new Date(),
+        message: error.message,
+      });
     }
 
     return ctx;
@@ -118,6 +130,14 @@ export class Executor implements IExecutor {
         ),
       );
 
+      this.progress$?.next({
+        type: 'step_start',
+        stepId: step.id,
+        stepName: step.name,
+        stepType: step.type,
+        timestamp: new Date(),
+      });
+
       const output = await this.executeStepWithRetry(ctx, step);
 
       if (step.name) {
@@ -145,6 +165,15 @@ export class Executor implements IExecutor {
       }
 
       executed.add(step.id);
+
+      this.progress$?.next({
+        type: 'step_complete',
+        stepId: step.id,
+        stepName: step.name,
+        stepType: step.type,
+        timestamp: new Date(),
+        data: output,
+      });
 
       ctx.logs.push(
         createStepLog(
@@ -202,6 +231,15 @@ export class Executor implements IExecutor {
       message: lastError?.message || 'Unknown error',
       attempt: maxAttempts,
     };
+
+    this.progress$?.next({
+      type: 'step_error',
+      stepId: step.id,
+      stepName: step.name,
+      stepType: step.type,
+      timestamp: new Date(),
+      message: lastError?.message || 'Unknown error',
+    });
 
     throw lastError || new Error('Step execution failed');
   }
