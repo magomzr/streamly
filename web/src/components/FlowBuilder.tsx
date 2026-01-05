@@ -1,4 +1,5 @@
 import { useCallback, useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   ReactFlow,
   MiniMap,
@@ -42,6 +43,8 @@ const initialNodes: Node<StepData>[] = [];
 const initialEdges: any = [];
 
 function FlowBuilderInner() {
+  const { id: urlFlowId } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { fitView } = useReactFlow();
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -282,6 +285,7 @@ function FlowBuilderInner() {
       } else {
         const saved = await createFlow(flow);
         setCurrentFlowId(saved.id);
+        navigate(`/flow/${saved.id}`, { replace: true });
       }
     } catch (err) {
       alert('Failed to save flow');
@@ -359,6 +363,12 @@ function FlowBuilderInner() {
       setShowOptionsPanel(false);
       setShowExecutionHistory(false);
       setShowExecution(false);
+
+      // Only navigate if URL doesn't match
+      if (urlFlowId !== flowId) {
+        navigate(`/flow/${flowId}`);
+      }
+
       setTimeout(() => fitView({ duration: 200 }), 0);
     },
     [
@@ -368,8 +378,82 @@ function FlowBuilderInner() {
       setCurrentFlowId,
       setHasUnsavedChanges,
       fitView,
+      navigate,
+      urlFlowId,
     ],
   );
+
+  // Load flow from URL on mount or URL change
+  useEffect(() => {
+    if (urlFlowId && flows.length > 0 && currentFlowId !== urlFlowId) {
+      const flow = flows.find((f) => f.id === urlFlowId);
+      if (flow) {
+        const loadedNodes = flow.data.steps.map((step) => ({
+          id: step.id,
+          type: 'step' as const,
+          position: { x: 0, y: 0 },
+          data: {
+            label: step.label || step.name || 'Unnamed',
+            stepId: step.name || 'unnamed',
+            stepType: step.type,
+            settings: step.settings || {},
+          },
+        }));
+        const loadedEdges = (flow.data.edges || []).map((edge, idx) => {
+          const isConditional = edge.branch !== undefined;
+          return {
+            id: `e${idx}`,
+            source: edge.source,
+            target: edge.target,
+            sourceHandle: edge.branch || 'default',
+            label: isConditional ? edge.branch?.toUpperCase() : undefined,
+            style: isConditional
+              ? {
+                  stroke: edge.branch === 'true' ? '#10b981' : '#ef4444',
+                  strokeWidth: 2,
+                }
+              : {},
+            labelStyle: isConditional
+              ? {
+                  fill: edge.branch === 'true' ? '#10b981' : '#ef4444',
+                  fontWeight: 600,
+                  fontSize: 12,
+                }
+              : {},
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              color: isConditional
+                ? edge.branch === 'true'
+                  ? '#10b981'
+                  : '#ef4444'
+                : undefined,
+            },
+            data: { branch: edge.branch },
+          };
+        });
+
+        const { nodes: layoutedNodes, edges: layoutedEdges } =
+          getLayoutedElements(loadedNodes, loadedEdges);
+
+        setFlowName(flow.data.name);
+        setTrigger(flow.data.trigger || { type: 'http', enabled: false });
+        setNodes(layoutedNodes);
+        setEdges(layoutedEdges);
+        setCurrentFlowId(urlFlowId);
+        setHasUnsavedChanges(false);
+        setTimeout(() => fitView({ duration: 200 }), 0);
+      }
+    }
+  }, [
+    urlFlowId,
+    flows,
+    currentFlowId,
+    setNodes,
+    setEdges,
+    setCurrentFlowId,
+    setHasUnsavedChanges,
+    fitView,
+  ]);
 
   const handleNewFlow = useCallback(() => {
     setFlowName('Untitled Flow');
@@ -380,7 +464,8 @@ function FlowBuilderInner() {
     setCurrentFlowId(null);
     setHasUnsavedChanges(false);
     setShowExecution(false);
-  }, [setNodes, setEdges, setCurrentFlowId, setHasUnsavedChanges]);
+    navigate('/', { replace: true });
+  }, [setNodes, setEdges, setCurrentFlowId, setHasUnsavedChanges, navigate]);
 
   const handleAutoLayout = useCallback(() => {
     const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
