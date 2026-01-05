@@ -9,7 +9,6 @@
 
 ### UI/UX
 
-- [ ] Real-time execution progress indicators (SSE/WebSocket)
 - [ ] Undo/redo functionality
 - [ ] Duplicate flow
 

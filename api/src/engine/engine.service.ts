@@ -3,6 +3,8 @@ import { StepRegistry } from '../registry/stepRegistry';
 import { Engine } from './engine';
 import { IContext, IFlow, IStepConstructor } from '../types';
 import { SecretsService } from '../services/secrets.service';
+import { Subject } from 'rxjs';
+import type { IProgressEvent } from '../types';
 
 @Injectable()
 export class EngineService {
@@ -19,6 +21,10 @@ export class EngineService {
   async runFlow(flow: IFlow, vars: Record<string, any>): Promise<IContext> {
     this.logger.log(`Running flow: ${flow.name}`);
     return this.engine.execute(flow, vars);
+  }
+
+  getProgressObservable(): Subject<IProgressEvent> {
+    return this.engine.progress$;
   }
 
   registerStep(step: IStepConstructor): void {

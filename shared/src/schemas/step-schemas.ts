@@ -86,35 +86,56 @@ export const STEP_SCHEMAS: Record<StepType, FieldSchema[]> = {
         { value: 'GET', label: 'GET' },
         { value: 'POST', label: 'POST' },
         { value: 'PUT', label: 'PUT' },
+        { value: 'PATCH', label: 'PATCH' },
         { value: 'DELETE', label: 'DELETE' },
       ],
       defaultValue: 'GET',
     },
-  ],
-
-  webhook: [
     {
-      name: 'url',
-      label: 'Webhook URL',
-      type: 'text',
-      placeholder: 'https://webhook.site/...',
-      required: true,
+      name: 'headers',
+      label: 'Headers (JSON)',
+      type: 'textarea',
+      placeholder: '{"Content-Type": "application/json"}',
     },
     {
-      name: 'payload',
-      label: 'Payload (JSON)',
+      name: 'bearerToken',
+      label: 'Bearer Token',
+      type: 'text',
+      placeholder: '{{secret.API_TOKEN}} or your-token-here',
+    },
+    {
+      name: 'body',
+      label: 'Body (JSON)',
       type: 'textarea',
       placeholder: '{"key": "value"}',
     },
+    {
+      name: 'timeout',
+      label: 'Timeout (ms)',
+      type: 'number',
+      placeholder: '30000',
+      defaultValue: 30000,
+    },
   ],
 
-  send_sms: [
+  log_message: [
     {
       name: 'message',
       label: 'Message',
       type: 'textarea',
-      placeholder: 'Your message here...',
+      placeholder: 'Your log message here...',
       required: true,
+    },
+    {
+      name: 'level',
+      label: 'Log Level',
+      type: 'select',
+      options: [
+        { value: 'INFO', label: 'Info' },
+        { value: 'WARN', label: 'Warning' },
+        { value: 'ERROR', label: 'Error' },
+      ],
+      defaultValue: 'INFO',
     },
   ],
 

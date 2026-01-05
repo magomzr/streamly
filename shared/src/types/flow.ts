@@ -1,12 +1,11 @@
 export type StepType =
   | 'conditional'
   | 'http_request'
-  | 'send_sms'
+  | 'log_message'
   | 'send_email'
   | 'json_minifier'
   | 'delay'
   | 'transform_data'
-  | 'webhook'
   | 'filter_array'
   | 'sort_array'
   | 'string_format'
