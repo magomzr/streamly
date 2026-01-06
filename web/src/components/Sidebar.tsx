@@ -87,7 +87,7 @@ export function Sidebar({ onLoadFlow, onNewFlow, isDark }: SidebarProps) {
             marginBottom: '8px',
           }}
         >
-          + New Flow
+          + New flow
         </button>
         {isLoading ? (
           <Spinner isDark={isDark} size={20} />
