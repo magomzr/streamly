@@ -89,7 +89,7 @@ export function ActiveFlowsMonitor({
               color: isDark ? '#f3f4f6' : '#111827',
             }}
           >
-            Active Flows
+            Active flows
           </span>
           {activeCount > 0 && (
             <span

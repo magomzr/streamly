@@ -74,7 +74,7 @@ The original endpoint still works and returns the full context after completion.
 
 ### From the UI
 
-Simply click "▶ Run Flow" - the UI automatically uses the streaming endpoint and shows real-time progress.
+Simply click "▶ Run flow" - the UI automatically uses the streaming endpoint and shows real-time progress.
 
 ### From Code
 

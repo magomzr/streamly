@@ -439,7 +439,7 @@ export function OptionsPanel({
               cursor: 'pointer',
             }}
           >
-            Auto Layout
+            Auto layout
           </button>
           <button
             onClick={onValidate}
@@ -455,7 +455,7 @@ export function OptionsPanel({
               cursor: 'pointer',
             }}
           >
-            ✓ Validate Flow
+            ✓ Validate flow
           </button>
           <button
             onClick={onToggleTheme}
@@ -471,7 +471,7 @@ export function OptionsPanel({
               cursor: 'pointer',
             }}
           >
-            {isDark ? '☀️' : '☽️'} {isDark ? 'Light' : 'Dark'} Mode
+            {isDark ? '☀️' : '☽️'} {isDark ? 'Light' : 'Dark'} mode
           </button>
           <button
             onClick={onExport}

@@ -1,5 +1,5 @@
 import { useCallback, useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   ReactFlow,
   MiniMap,
@@ -22,6 +22,7 @@ import { Sidebar } from './Sidebar.js';
 import { ExecutionView } from './ExecutionView.js';
 import { ExecutionHistory } from './ExecutionHistory.js';
 import { OptionsPanel } from './OptionsPanel.js';
+import { WelcomeModal } from './WelcomeModal.js';
 import type { StepData, StepType } from '../types.js';
 import { STEP_LABELS, type IFlow, type ITriggerConfig } from '@streamly/shared';
 import { apiService } from '../services/api.js';
@@ -45,11 +46,12 @@ const initialEdges: any = [];
 function FlowBuilderInner() {
   const { id: urlFlowId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { fitView } = useReactFlow();
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [selectedNode, setSelectedNode] = useState<Node<StepData> | null>(null);
-  const [flowName, setFlowName] = useState('Untitled Flow');
+  const [flowName, setFlowName] = useState('Untitled flow');
   const [trigger, setTrigger] = useState<ITriggerConfig>({
     type: 'http',
     enabled: false,
@@ -60,6 +62,7 @@ function FlowBuilderInner() {
   const [showExecutionHistory, setShowExecutionHistory] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
 
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [showValidation, setShowValidation] = useState(false);
@@ -86,6 +89,33 @@ function FlowBuilderInner() {
   useEffect(() => {
     document.body.style.backgroundColor = isDark ? '#111827' : '#ffffff';
   }, [isDark]);
+
+  // Show welcome modal only on root path
+  useEffect(() => {
+    if (location.pathname === '/') {
+      setShowWelcome(true);
+      // Clear canvas when navigating to root
+      if (currentFlowId) {
+        setFlowName('Untitled flow');
+        setNodes([]);
+        setEdges([]);
+        setVars({});
+        setTrigger({ type: 'http', enabled: false });
+        setCurrentFlowId(null);
+        setHasUnsavedChanges(false);
+        setShowExecution(false);
+      }
+    } else {
+      setShowWelcome(false);
+    }
+  }, [
+    location.pathname,
+    currentFlowId,
+    setNodes,
+    setEdges,
+    setCurrentFlowId,
+    setHasUnsavedChanges,
+  ]);
 
   const handleDeleteNode = useCallback(
     (nodeId: string) => {
@@ -456,7 +486,7 @@ function FlowBuilderInner() {
   ]);
 
   const handleNewFlow = useCallback(() => {
-    setFlowName('Untitled Flow');
+    setFlowName('Untitled flow');
     setNodes([]);
     setEdges([]);
     setVars({});
@@ -924,7 +954,7 @@ function FlowBuilderInner() {
             cursor: isExecuting ? 'not-allowed' : 'pointer',
           }}
         >
-          {isExecuting ? 'Executing...' : '▶ Run Flow'}
+          {isExecuting ? 'Executing...' : '▶ Run flow'}
         </button>
 
         {currentFlowId && (
@@ -1094,6 +1124,10 @@ function FlowBuilderInner() {
             </button>
           </div>
         </div>
+      )}
+
+      {showWelcome && (
+        <WelcomeModal onClose={() => setShowWelcome(false)} isDark={isDark} />
       )}
     </div>
   );
