@@ -4,6 +4,7 @@
 - Implement routing to load flows (#50)
 - Add a "Welcome" modal (#51)
 - Include webhook call for manual flows (#52)
+- Add version badge with changelog modal (#53)
 
 ## 0.0.9
 
