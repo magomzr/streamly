@@ -5,7 +5,9 @@ import { CategoryAccordion } from './CategoryAccordion';
 import { ActiveFlowsMonitor } from './ActiveFlowsMonitor';
 import { Spinner } from './Spinner';
 import { Logo } from './Logo';
+import { ChangelogModal } from './ChangelogModal';
 import { STEP_CATEGORIES } from '@streamly/shared';
+import packageJson from '../../../package.json';
 
 interface SidebarProps {
   onLoadFlow: (flowId: string) => void;
@@ -17,6 +19,7 @@ export function Sidebar({ onLoadFlow, onNewFlow, isDark }: SidebarProps) {
   const { flows, currentFlowId, isLoading, loadFlows, deleteFlow } =
     useFlowStore();
   const [refreshMonitor, setRefreshMonitor] = useState(0);
+  const [showChangelog, setShowChangelog] = useState(false);
 
   useEffect(() => {
     loadFlows();
@@ -241,6 +244,36 @@ export function Sidebar({ onLoadFlow, onNewFlow, isDark }: SidebarProps) {
           onDragStart={onDragStart}
         />
       </div>
+
+      <div
+        style={{
+          padding: '12px 16px',
+          borderTop: isDark ? '1px solid #374151' : '1px solid #e5e7eb',
+        }}
+      >
+        <button
+          onClick={() => setShowChangelog(true)}
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            fontSize: '11px',
+            color: isDark ? '#9ca3af' : '#6b7280',
+            cursor: 'pointer',
+            fontFamily: 'monospace',
+            textDecoration: 'underline',
+          }}
+        >
+          v{packageJson.version}
+        </button>
+      </div>
+
+      {showChangelog && (
+        <ChangelogModal
+          onClose={() => setShowChangelog(false)}
+          isDark={isDark}
+        />
+      )}
     </div>
   );
 }

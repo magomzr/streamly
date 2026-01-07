@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "npm run generate:changelog && tsc -b && vite build",
+    "generate:changelog": "cd scripts && ./generate-changelog.sh",
     "lint": "eslint .",
     "preview": "vite preview"
   },
