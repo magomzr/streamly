@@ -7,7 +7,7 @@ import type { IFlow } from '@streamly/shared';
 @Injectable()
 export class FlowService {
   async create(flow: IFlow) {
-    const trigger = flow.trigger || { type: 'http', enabled: false };
+    const trigger = flow.trigger || { type: 'manual', enabled: false };
     const [created] = await db
       .insert(flows)
       .values({
@@ -35,7 +35,7 @@ export class FlowService {
   }
 
   async update(id: string, flow: IFlow) {
-    const trigger = flow.trigger || { type: 'http', enabled: false };
+    const trigger = flow.trigger || { type: 'manual', enabled: false };
     const [updated] = await db
       .update(flows)
       .set({

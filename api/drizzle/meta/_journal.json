@@ -22,6 +22,13 @@
       "when": 1767126532677,
       "tag": "0002_brainy_weapon_omega",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1767805327766,
+      "tag": "0003_curious_mister_sinister",
+      "breakpoints": true
     }
   ]
 }

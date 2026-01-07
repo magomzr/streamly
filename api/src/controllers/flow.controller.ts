@@ -95,10 +95,8 @@ export class FlowController {
     });
 
     try {
-      const context = await this.engineService.runFlow(
-        flow.data,
-        body.vars || {},
-      );
+      const finalVars = { ...flow.data?.vars, ...body?.vars };
+      const context = await this.engineService.runFlow(flow.data, finalVars);
       await this.executionService.create(id, context);
 
       res.write(`data: ${JSON.stringify({ type: 'complete', context })}\n\n`);
@@ -120,10 +118,8 @@ export class FlowController {
     const flow = await this.flowService.findOne(id);
     if (!flow) throw new Error('Flow not found');
 
-    const context = await this.engineService.runFlow(
-      flow.data,
-      body.vars || {},
-    );
+    const finalVars = { ...flow.data?.vars, ...body?.vars };
+    const context = await this.engineService.runFlow(flow.data, finalVars);
     await this.executionService.create(id, context);
 
     return context;

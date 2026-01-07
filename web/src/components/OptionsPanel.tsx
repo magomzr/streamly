@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { ITriggerConfig } from '@streamly/shared';
 import { VarsEditor } from './VarsEditor.js';
 import { SecretsManager } from './SecretsManager.js';
+import { useFlowStore } from '../stores/flow.js';
 
 interface OptionsPanelProps {
   trigger: ITriggerConfig;
@@ -27,6 +28,8 @@ const CRON_PRESETS = [
   { label: 'Every Monday at 9 AM', value: '0 9 * * 1' },
 ];
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
 export function OptionsPanel({
   trigger,
   onTriggerChange,
@@ -39,7 +42,9 @@ export function OptionsPanel({
   isDark,
   onToggleTheme,
 }: OptionsPanelProps) {
-  const [type, setType] = useState<'http' | 'cron'>(trigger?.type || 'http');
+  const [type, setType] = useState<'manual' | 'cron'>(
+    trigger?.type || 'manual',
+  );
   const [cronExpression, setCronExpression] = useState(
     trigger?.cronExpression || '*/5 * * * *',
   );
@@ -47,8 +52,9 @@ export function OptionsPanel({
   const [showPresets, setShowPresets] = useState(false);
   const [showVarsEditor, setShowVarsEditor] = useState(false);
   const [showSecretsManager, setShowSecretsManager] = useState(false);
+  const { currentFlowId } = useFlowStore();
 
-  const handleTypeChange = (newType: 'http' | 'cron') => {
+  const handleTypeChange = (newType: 'manual' | 'cron') => {
     setType(newType);
     onTriggerChange({
       type: newType,
@@ -65,6 +71,12 @@ export function OptionsPanel({
   const handleEnabledChange = (value: boolean) => {
     setEnabled(value);
     onTriggerChange({ type, cronExpression, enabled: value });
+  };
+
+  const copyWebhookUrl = () => {
+    if (!currentFlowId) return;
+    const url = `${API_BASE_URL}/flows/${currentFlowId}/execute`;
+    navigator.clipboard.writeText(url);
   };
 
   return (
@@ -111,22 +123,22 @@ export function OptionsPanel({
           </label>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
-              onClick={() => handleTypeChange('http')}
+              onClick={() => handleTypeChange('manual')}
               style={{
                 flex: 1,
                 padding: '8px',
                 backgroundColor:
-                  type === 'http' ? '#3b82f6' : isDark ? '#374151' : 'white',
+                  type === 'manual' ? '#3b82f6' : isDark ? '#374151' : 'white',
                 color:
-                  type === 'http' ? 'white' : isDark ? '#d1d5db' : '#6b7280',
-                border: `1px solid ${type === 'http' ? '#3b82f6' : isDark ? '#4b5563' : '#d1d5db'}`,
+                  type === 'manual' ? 'white' : isDark ? '#d1d5db' : '#6b7280',
+                border: `1px solid ${type === 'manual' ? '#3b82f6' : isDark ? '#4b5563' : '#d1d5db'}`,
                 borderRadius: '6px',
                 fontSize: '13px',
                 fontWeight: 500,
                 cursor: 'pointer',
               }}
             >
-              HTTP
+              Manual
             </button>
             <button
               onClick={() => handleTypeChange('cron')}
@@ -300,18 +312,81 @@ export function OptionsPanel({
           </>
         )}
 
-        {type === 'http' && (
+        {type === 'manual' && currentFlowId && (
           <div
             style={{
-              padding: '8px 12px',
+              marginTop: '12px',
+              padding: '12px',
               backgroundColor: isDark ? '#1e3a8a' : '#dbeafe',
               border: `1px solid ${isDark ? '#1e40af' : '#bfdbfe'}`,
               borderRadius: '6px',
-              fontSize: '12px',
-              color: isDark ? '#dbeafe' : '#1e40af',
             }}
           >
-            Manual or HTTP trigger
+            <div
+              style={{
+                fontSize: '12px',
+                fontWeight: 600,
+                color: isDark ? '#dbeafe' : '#1e40af',
+                marginBottom: '8px',
+              }}
+            >
+              Webhook URL
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                gap: '8px',
+                alignItems: 'center',
+              }}
+            >
+              <input
+                type="text"
+                value={`${API_BASE_URL}/flows/${currentFlowId}/execute`}
+                readOnly
+                title="POST request to execute this flow"
+                style={{
+                  flex: 1,
+                  padding: '6px 8px',
+                  fontSize: '11px',
+                  backgroundColor: isDark ? '#1e3a8a' : 'white',
+                  color: isDark ? '#bfdbfe' : '#1e40af',
+                  border: `1px solid ${isDark ? '#1e40af' : '#93c5fd'}`,
+                  borderRadius: '4px',
+                  fontFamily: 'monospace',
+                }}
+              />
+              <button
+                onClick={copyWebhookUrl}
+                style={{
+                  padding: '6px 12px',
+                  backgroundColor: isDark ? '#1e40af' : '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  fontSize: '11px',
+                  cursor: 'pointer',
+                  fontWeight: 500,
+                }}
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+        )}
+
+        {type === 'manual' && !currentFlowId && (
+          <div
+            style={{
+              marginTop: '12px',
+              padding: '8px 12px',
+              backgroundColor: isDark ? '#374151' : '#f3f4f6',
+              border: `1px solid ${isDark ? '#4b5563' : '#e5e7eb'}`,
+              borderRadius: '6px',
+              fontSize: '12px',
+              color: isDark ? '#9ca3af' : '#6b7280',
+            }}
+          >
+            Save flow to get webhook URL
           </div>
         )}
       </div>

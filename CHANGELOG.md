@@ -3,6 +3,7 @@
 - Update log window (#49)
 - Implement routing to load flows (#50)
 - Add a "Welcome" modal (#51)
+- Include webhook call for manual flows (#52)
 
 ## 0.0.9
 

@@ -53,7 +53,7 @@ function FlowBuilderInner() {
   const [selectedNode, setSelectedNode] = useState<Node<StepData> | null>(null);
   const [flowName, setFlowName] = useState('Untitled flow');
   const [trigger, setTrigger] = useState<ITriggerConfig>({
-    type: 'http',
+    type: 'manual',
     enabled: false,
   });
   const [vars, setVars] = useState<Record<string, any>>({});
@@ -100,7 +100,7 @@ function FlowBuilderInner() {
         setNodes([]);
         setEdges([]);
         setVars({});
-        setTrigger({ type: 'http', enabled: false });
+        setTrigger({ type: 'manual', enabled: false });
         setCurrentFlowId(null);
         setHasUnsavedChanges(false);
         setShowExecution(false);
@@ -293,8 +293,9 @@ function FlowBuilderInner() {
         branch: edge.data?.branch as 'true' | 'false' | undefined,
       })),
       trigger,
+      vars,
     };
-  }, [flowName, nodes, edges, trigger]);
+  }, [flowName, nodes, edges, trigger, vars]);
 
   const handleSave = useCallback(async () => {
     // Validate flow before saving
@@ -338,7 +339,8 @@ function FlowBuilderInner() {
       if (!flow) return;
 
       setFlowName(flow.data.name);
-      setTrigger(flow.data.trigger || { type: 'http', enabled: false });
+      setTrigger(flow.data.trigger || { type: 'manual', enabled: false });
+      setVars(flow.data.vars || {});
       const loadedNodes = flow.data.steps.map((step) => ({
         id: step.id,
         type: 'step' as const,
@@ -466,7 +468,8 @@ function FlowBuilderInner() {
           getLayoutedElements(loadedNodes, loadedEdges);
 
         setFlowName(flow.data.name);
-        setTrigger(flow.data.trigger || { type: 'http', enabled: false });
+        setTrigger(flow.data.trigger || { type: 'manual', enabled: false });
+        setVars(flow.data.vars || {});
         setNodes(layoutedNodes);
         setEdges(layoutedEdges);
         setCurrentFlowId(urlFlowId);
@@ -490,7 +493,7 @@ function FlowBuilderInner() {
     setNodes([]);
     setEdges([]);
     setVars({});
-    setTrigger({ type: 'http', enabled: false });
+    setTrigger({ type: 'manual', enabled: false });
     setCurrentFlowId(null);
     setHasUnsavedChanges(false);
     setShowExecution(false);
@@ -589,6 +592,7 @@ function FlowBuilderInner() {
         const imported: IFlow = JSON.parse(text);
 
         setFlowName(imported.name);
+        setVars(imported.vars || {});
         const loadedNodes = imported.steps.map((step) => ({
           id: step.id,
           type: 'step' as const,
@@ -638,7 +642,7 @@ function FlowBuilderInner() {
 
         setNodes(layoutedNodes);
         setEdges(layoutedEdges);
-        setTrigger(imported.trigger || { type: 'http', enabled: false });
+        setTrigger(imported.trigger || { type: 'manual', enabled: false });
         setCurrentFlowId(null);
         setHasUnsavedChanges(true);
         setTimeout(() => fitView({ duration: 200 }), 0);
