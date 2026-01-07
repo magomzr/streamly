@@ -234,7 +234,7 @@ export const complexFlow: IFlow = {
     },
   ],
   trigger: {
-    type: 'http',
+    type: 'manual',
     enabled: false,
   },
 };
