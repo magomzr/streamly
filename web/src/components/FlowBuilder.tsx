@@ -34,6 +34,7 @@ import {
   getLayoutedElements,
   topologicalSort,
   validateFlow,
+  generateUniqueStepId,
 } from '../utils/index.js';
 
 const nodeTypes = {
@@ -246,16 +247,9 @@ function FlowBuilderInner() {
       };
 
       const label = STEP_LABELS[stepType];
-      let baseStepId = label.toLowerCase().replace(/\s+/g, '_');
-
-      // Check for duplicates and add suffix
+      const baseStepId = label.toLowerCase().replace(/\s+/g, '_');
       const existingIds = nodes.map((n) => n.data.stepId);
-      let stepId = baseStepId;
-      let counter = 2;
-      while (existingIds.includes(stepId)) {
-        stepId = `${baseStepId}_${counter}`;
-        counter++;
-      }
+      const stepId = generateUniqueStepId(baseStepId, existingIds);
 
       const newNode: Node<StepData> = {
         id: generateUUID(),
@@ -687,12 +681,7 @@ function FlowBuilderInner() {
         const pastedNodes = copiedNodes.map((node) => {
           const newId = generateUUID();
           const existingIds = nodes.map((n) => n.data.stepId);
-          let stepId = node.data.stepId;
-          let counter = 2;
-          while (existingIds.includes(stepId)) {
-            stepId = `${node.data.stepId}_${counter}`;
-            counter++;
-          }
+          const stepId = generateUniqueStepId(node.data.stepId, existingIds);
           return {
             ...node,
             id: newId,

@@ -5,6 +5,7 @@
 - Add a "Welcome" modal (#51)
 - Include webhook call for manual flows (#52)
 - Add version badge with changelog modal (#53)
+- Name duplicated steps with a numeric strategy (#54)
 
 ## 0.0.9
 
