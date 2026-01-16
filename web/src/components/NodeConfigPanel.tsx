@@ -249,6 +249,7 @@ export function NodeConfigPanel({
             padding: '8px 12px',
             backgroundColor: '#f0fdf4',
             border: '1px solid #86efac',
+            cursor: 'not-allowed',
             borderRadius: '6px',
             fontSize: '13px',
             fontFamily: 'monospace',
